@@ -12,7 +12,7 @@ extern "C" {
 
 #include "EEPROMHelper.h"
 
-#include "src/ArduinoJson-v5.13.5/ArduinoJson.h"
+#include <ArduinoJson/ArduinoJson.h>
 #if ARDUINOJSON_VERSION_MAJOR != 5
 // The software was build using ArduinoJson v5.x
 // version 6 is still in beta at the time of writing
