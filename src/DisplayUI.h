@@ -12,23 +12,23 @@
 // ===== adjustable ===== //
 #if defined(SSD1306_I2C)
   #include <Wire.h>
-  #include "src/esp8266-oled-ssd1306-4.1.0/SSD1306Wire.h"
+  #include "SSD1306Wire.h"
 #elif defined(SSD1306_SPI)
   #include <SPI.h>
-  #include "src/esp8266-oled-ssd1306-4.1.0/SSD1306Spi.h"
+  #include "SSD1306Spi.h"
 #elif defined(SH1106_I2C)
   #include <Wire.h>
-  #include "src/esp8266-oled-ssd1306-4.1.0/SH1106Wire.h"
+  #include "SH1106Wire.h"
 #elif defined(SH1106_SPI)
   #include <SPI.h>
-  #include "src/esp8266-oled-ssd1306-4.1.0/SH1106Spi.h"
+  #include "SH1106Spi.h"
 #endif /* if defined(SSD1306_I2C) */
 
 #ifdef RTC_DS3231
-#include "src/DS3231-1.0.3/DS3231.h"
+#include "DS3231.h"
 #endif // ifdef RTC_DS3231
 
-#include "src/SimpleButton/SimpleButton.h"
+#include "SimpleButton.h"
 
 using namespace simplebutton;
 

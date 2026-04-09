@@ -11,11 +11,11 @@
 
 // Inlcude libraries for Neopixel or LED_MY92xx if used
 #if defined(LED_NEOPIXEL)
-#include "src/Adafruit_NeoPixel-1.7.0/Adafruit_NeoPixel.h"
+#include "Adafruit_NeoPixel.h"
 #elif defined(LED_MY92)
-#include "src/my92xx-3.0.3/my92xx.h"
+#include "my92xx.h"
 #elif defined(LED_DOTSTAR)
-#include "src/Adafruit_DotStar-1.1.4/Adafruit_DotStar.h"
+#include "Adafruit_DotStar.h"
 #endif // if defined(LED_NEOPIXEL)
 
 extern Attack attack;
