@@ -7,26 +7,30 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: python:3.11-slim
-    
     steps:
       - uses: actions/checkout@v4
       
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+          key: ${{ runner.os }}-pio-${{ hashFiles('**/platformio.ini') }}
+          
       - name: Install PlatformIO
-        run: pip install platformio esptool
-        
+        run: pip install platformio
+          
       - name: Build firmware
-        run: |
-          cd esp8266_deauther
-          mv * ../ 2>/dev/null || true
-          mv .* ../ 2>/dev/null || true
-          cd ..
-          rm -rf esp8266_deauther
-          pio run -e nodemcuv2 --target buildfs || true
-          pio run -e nodemcuv2
+        run: pio run -e nodemcuv2
         
       - name: Upload firmware
         uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: firmware
           path: .pio/build/nodemcuv2/firmware.bin
