@@ -7,7 +7,7 @@
 extern "C" {
   #include "user_interface.h"
 }
-#include <ArduinoJson/ArduinoJson.h>
+#include <ArduinoJson.h>
 
 /*
    Here is a collection of useful functions and variables.

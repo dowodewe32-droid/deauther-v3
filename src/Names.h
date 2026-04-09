@@ -6,7 +6,7 @@
 extern "C" {
   #include "user_interface.h"
 }
-#include <ArduinoJson/ArduinoJson.h>
+#include <ArduinoJson.h>
 #include "language.h"
 #include "SimpleList.h"
 
