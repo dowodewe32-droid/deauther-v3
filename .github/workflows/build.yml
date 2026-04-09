@@ -7,19 +7,23 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: python:3.11-slim
+    
     steps:
       - uses: actions/checkout@v4
       
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          
       - name: Install PlatformIO
-        run: pip install platformio
+        run: pip install platformio esptool
         
       - name: Build firmware
-        run: pio run -e nodemcuv2
+        run: |
+          cd esp8266_deauther
+          mv * ../ 2>/dev/null || true
+          mv .* ../ 2>/dev/null || true
+          cd ..
+          rm -rf esp8266_deauther
+          pio run -e nodemcuv2 --target buildfs || true
+          pio run -e nodemcuv2
         
       - name: Upload firmware
         uses: actions/upload-artifact@v4
