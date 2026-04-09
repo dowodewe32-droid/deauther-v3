@@ -28,11 +28,11 @@
  *
  */
 
-#ifndef SSD1306Spi_h
-#define SSD1306Spi_h
+#ifndef SH1106Brzo_h
+#define SH1106Brzo_h
 
 #include "OLEDDisplay.h"
-#include <SPI.h>
+#include <brzo_i2c.h>
 
 #if F_CPU == 160000000L
   #define BRZO_I2C_SPEED 1000
@@ -40,38 +40,23 @@
   #define BRZO_I2C_SPEED 800
 #endif
 
-class SSD1306Spi : public OLEDDisplay {
+class SH1106Brzo : public OLEDDisplay {
   private:
-      uint8_t             _rst;
-      uint8_t             _dc;
-      uint8_t             _cs;
+      uint8_t             _address;
+      uint8_t             _sda;
+      uint8_t             _scl;
 
   public:
-    /* pass _cs as -1 to indicate "do not use CS pin", for cases where it is hard wired low */
-    SSD1306Spi(uint8_t rst, uint8_t dc, uint8_t cs, OLEDDISPLAY_GEOMETRY g = GEOMETRY_128_64) {
-        setGeometry(g);
+	SH1106Brzo(uint8_t address, uint8_t sda, uint8_t scl, OLEDDISPLAY_GEOMETRY g = GEOMETRY_128_64) {
+		setGeometry(g);
 
-      this->_rst = rst;
-      this->_dc  = dc;
-      this->_cs  = cs;
+      this->_address = address;
+      this->_sda = sda;
+      this->_scl = scl;
     }
 
     bool connect(){
-      pinMode(_dc, OUTPUT);
-      if (_cs != (uint8_t) -1) {
-        pinMode(_cs, OUTPUT);
-      }  
-      pinMode(_rst, OUTPUT);
-
-      SPI.begin ();
-      SPI.setClockDivider (SPI_CLOCK_DIV2);
-
-      // Pulse Reset low for 10ms
-      digitalWrite(_rst, HIGH);
-      delay(1);
-      digitalWrite(_rst, LOW);
-      delay(10);
-      digitalWrite(_rst, HIGH);
+      brzo_i2c_setup(_sda, _scl, 0);
       return true;
     }
 
@@ -82,7 +67,6 @@ class SSD1306Spi : public OLEDDisplay {
 
        uint8_t minBoundX = UINT8_MAX;
        uint8_t maxBoundX = 0;
-
        uint8_t x, y;
 
        // Calculate the Y bounding box of changes
@@ -106,47 +90,39 @@ class SSD1306Spi : public OLEDDisplay {
        // holdes true for all values of pos
        if (minBoundY == UINT8_MAX) return;
 
-       sendCommand(COLUMNADDR);
-       sendCommand(minBoundX);
-       sendCommand(maxBoundX);
+       uint8_t k = 0;
+       uint8_t sendBuffer[17];
+       sendBuffer[0] = 0x40;
 
-       sendCommand(PAGEADDR);
-       sendCommand(minBoundY);
-       sendCommand(maxBoundY);
+       // Calculate the colum offset
+       uint8_t minBoundXp2H = (minBoundX + 2) & 0x0F;
+       uint8_t minBoundXp2L = 0x10 | ((minBoundX + 2) >> 4 );
 
-       set_CS(HIGH);
-       digitalWrite(_dc, HIGH);   // data mode
-       set_CS(LOW);
+       brzo_i2c_start_transaction(this->_address, BRZO_I2C_SPEED);
+
        for (y = minBoundY; y <= maxBoundY; y++) {
+         sendCommand(0xB0 + y);
+         sendCommand(minBoundXp2H);
+         sendCommand(minBoundXp2L);
          for (x = minBoundX; x <= maxBoundX; x++) {
-           SPI.transfer(buffer[x + y * displayWidth]);
+             k++;
+             sendBuffer[k] = buffer[x + y * displayWidth];
+             if (k == 16)  {
+               brzo_i2c_write(sendBuffer, 17, true);
+               k = 0;
+             }
+         }
+         if (k != 0) {
+           brzo_i2c_write(sendBuffer, k + 1, true);
+           k = 0;
          }
          yield();
        }
-       set_CS(HIGH);
-     #else
-       // No double buffering
-       sendCommand(COLUMNADDR);
-       sendCommand(0x0);
-       sendCommand(0x7F);
-
-       sendCommand(PAGEADDR);
-       sendCommand(0x0);
-
-       if (geometry == GEOMETRY_128_64 || geometry == GEOMETRY_64_48 || geometry == GEOMETRY_64_32 ) {
-         sendCommand(0x7);
-       } else if (geometry == GEOMETRY_128_32) {
-         sendCommand(0x3);
+       if (k != 0) {
+         brzo_i2c_write(sendBuffer, k + 1, true);
        }
-
-        set_CS(HIGH);
-        digitalWrite(_dc, HIGH);   // data mode
-        set_CS(LOW);
-        for (uint16_t i=0; i<displayBufferSize; i++) {
-          SPI.transfer(buffer[i]);
-          yield();
-        }
-        set_CS(HIGH);
+       brzo_i2c_end_transaction();
+     #else
      #endif
     }
 
@@ -154,17 +130,11 @@ class SSD1306Spi : public OLEDDisplay {
 	int getBufferOffset(void) {
 		return 0;
 	}
-    inline void set_CS(bool level) {
-      if (_cs != (uint8_t) -1) {
-        digitalWrite(_cs, level);
-      }
-    };
     inline void sendCommand(uint8_t com) __attribute__((always_inline)){
-      set_CS(HIGH);
-      digitalWrite(_dc, LOW);
-      set_CS(LOW);
-      SPI.transfer(com);
-      set_CS(HIGH);
+      uint8_t command[2] = {0x80 /* command mode */, com};
+      brzo_i2c_start_transaction(_address, BRZO_I2C_SPEED);
+      brzo_i2c_write(command, 2, true);
+      brzo_i2c_end_transaction();
     }
 };
 
