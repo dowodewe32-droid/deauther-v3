@@ -7,22 +7,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: 
+      image: luid09/esp32-build:latest
+      options: --privileged
     steps:
       - uses: actions/checkout@v4
       
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          
-      - name: Install PlatformIO
-        run: pip install platformio
-          
       - name: Build firmware
         run: |
           pio run -e nodemcuv2
+        working-directory: /workspace
         env:
-          PLATFORMIO_CACHE_DIR: ${{ github.workspace }}/.cache
+          HOME: /root
           
       - name: Upload firmware
         uses: actions/upload-artifact@v4
