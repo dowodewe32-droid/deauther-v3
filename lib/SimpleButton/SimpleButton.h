@@ -13,6 +13,7 @@ namespace simplebutton {
         virtual bool isPressed() { return false; }
         virtual bool wasPressed() { return false; }
         virtual bool read() { return false; }
+        virtual bool holding(unsigned long time=0) { return false; }
         virtual void setOnClicked(Callback) {}
         virtual void setOnHolding(Callback, unsigned long = 0) {}
         virtual void setOnReleased(Callback) {}
@@ -25,6 +26,7 @@ namespace simplebutton {
         bool isPressed() override { return false; }
         bool wasPressed() override { return false; }
         bool read() override { return false; }
+        bool holding(unsigned long time=0) override { return false; }
         void setOnClicked(Callback c) override {}
         void setOnHolding(Callback c, unsigned long t=0) override {}
         void setOnReleased(Callback c) override {}
