@@ -7,16 +7,16 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: espressif/idf:latest
     steps:
       - uses: actions/checkout@v4
       
-      - name: Install PlatformIO
-        run: pip install platformio
-        
-      - name: Build firmware
-        run: |
-          pio run -e nodemcuv2
+      - name: Build with PlatformIO
+        uses: platformio/project-action@v1
+        with:
+          platform: espressif8266@4.2.1
+          board: nodemcuv2
+          board_flash: 4MB
+          board_filesystem: 1MB
         
       - name: Upload firmware
         uses: actions/upload-artifact@v4
