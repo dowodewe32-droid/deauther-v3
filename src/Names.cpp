@@ -4,10 +4,10 @@
 
 #ifdef ESP32
     #include <SPIFFS.h>
-    #define FS SPIFFS
+    #define FILE_SYSTEM SPIFFS
 #else
     #include <LittleFS.h>
-    #define FS LittleFS
+    #define FILE_SYSTEM LittleFS
 #endif
 
 Names::Names() {

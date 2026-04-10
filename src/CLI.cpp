@@ -5,11 +5,12 @@
 #ifdef ESP32
     #include <WiFi.h>
     #include <esp_system.h>
-    #include <SPIFFS.h>
-    #define FS SPIFFS
+    #include <SPIFFILE_SYSTEM.h>
+    #define FILE_SYSTEM SPIFFILE_SYSTEM
 #else
-    #include <FS.h>
-    #define FS FS
+    #include <FILE_SYSTEM.h>
+    #include <LittleFILE_SYSTEM.h>
+    #define FILE_SYSTEM LittleFILE_SYSTEM
 #endif
 #include "settings.h"
 #include "wifi.h"
@@ -830,7 +831,7 @@ void CLI::runCommand(String input) {
         // Web
         else if (eqls(str, S_JSON_WEBINTERFACE)) prntln(settings::getWebSettings().enabled);
         else if (eqls(str, S_JSON_CAPTIVEPORTAL)) prntln(settings::getWebSettings().captive_portal);
-        else if (eqls(str, S_JSON_WEB_SPIFFS)) prntln(settings::getWebSettings().use_spiffs);
+        else if (eqls(str, S_JSON_WEB_SPIFFILE_SYSTEM)) prntln(settings::getWebSettings().use_spiffs);
         else if (eqls(str, S_JSON_LANG)) prntln(settings::getWebSettings().lang, 3);
 
         // CLI
@@ -893,7 +894,7 @@ void CLI::runCommand(String input) {
         // Web
         else if (eqls(str, S_JSON_WEBINTERFACE)) newSettings.web.enabled = boolVal;
         else if (eqls(str, S_JSON_CAPTIVEPORTAL)) newSettings.web.captive_portal = boolVal;
-        else if (eqls(str, S_JSON_WEB_SPIFFS)) newSettings.web.use_spiffs = boolVal;
+        else if (eqls(str, S_JSON_WEB_SPIFFILE_SYSTEM)) newSettings.web.use_spiffs = boolVal;
         else if (eqls(str, S_JSON_LANG)) strncpy(newSettings.web.lang, strVal.c_str(), 3);
 
         // CLI
@@ -977,16 +978,16 @@ void CLI::runCommand(String input) {
         wifi_get_macaddr(STATION_IF, mac);
         prntln(macToStr(mac));
 
-        FSInfo fs_info;
-        FS.info(fs_info);
+        FILE_SYSTEMInfo fs_info;
+        FILE_SYSTEM.info(fs_info);
         sprintf(s, str(
                     CLI_SYSTEM_RAM_OUT).c_str(), fs_info.usedBytes, fs_info.usedBytes / (fs_info.totalBytes / 100), fs_info.totalBytes - fs_info.usedBytes,
                 (fs_info.totalBytes - fs_info.usedBytes) / (fs_info.totalBytes / 100), fs_info.totalBytes);
         prnt(String(s));
-        sprintf(s, str(CLI_SYSTEM_SPIFFS_OUT).c_str(), fs_info.blockSize, fs_info.pageSize);
+        sprintf(s, str(CLI_SYSTEM_SPIFFILE_SYSTEM_OUT).c_str(), fs_info.blockSize, fs_info.pageSize);
         prnt(String(s));
         prntln(CLI_FILES);
-        Dir dir = FS.openDir(String(SLASH));
+        Dir dir = FILE_SYSTEM.openDir(String(SLASH));
 
         while (dir.next()) {
             prnt(String(SPACE) + String(SPACE) + dir.fileName() + String(SPACE));
@@ -1021,8 +1022,8 @@ void CLI::runCommand(String input) {
     // ===== FORMAT ==== //
     // format
     else if (eqlsCMD(0, CLI_FORMAT)) {
-        prnt(CLI_FORMATTING_SPIFFS);
-        FS.format();
+        prnt(CLI_FORMATTING_SPIFFILE_SYSTEM);
+        FILE_SYSTEM.format();
         prntln(SETUP_OK);
     }
 
