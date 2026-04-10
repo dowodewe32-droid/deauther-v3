@@ -6,6 +6,9 @@
 #ifdef ESP32
     #include <WiFi.h>
     #include <esp_system.h>
+    #include <esp_wifi.h>
+    #include <SPIFFS.h>
+    #define LittleFS SPIFFS
 #else
 extern "C" {
   #include "user_interface.h"
@@ -112,7 +115,7 @@ void setup() {
 
 #ifdef ESP32
     esp_wifi_set_promiscuous(true);
-    esp_wifi_promiscuous_rx_register(promiscuousCallback, NULL);
+    esp_wifi_set_promiscuous_rx_cb(promiscuousCallback);
 #else
     wifi_set_promiscuous_rx_cb([](uint8_t* buf, uint16_t len) {
         scan.sniffer(buf, len);
