@@ -6,6 +6,7 @@
     #include <WiFi.h>
     #include <esp_system.h>
     #include <SPIFFS.h>
+    #include <FS.h>
     #define FILE_SYSTEM SPIFFS
 #else
     #include <FILE_SYSTEM.h>
@@ -603,7 +604,11 @@ void CLI::runCommand(String input) {
                         }
                         prntln();
                     }
+#ifdef ESP32
+                    ESP.restart();
+#else
                     ESP.reset();
+#endif
                 } else if ((i / 10) % 10 == 0) {
                     prnt(CLI_RICE_MEM);
                     prnt(String(random(16, 255), HEX));
@@ -987,12 +992,10 @@ void CLI::runCommand(String input) {
         prntln(macToStr(mac));
 
 #ifdef ESP32
-        FSInfo fs_info;
-        FILE_SYSTEM.info(fs_info);
-        sprintf(s, str(CLI_SYSTEM_RAM_OUT).c_str(), fs_info.usedBytes, fs_info.usedBytes * 100 / fs_info.totalBytes, fs_info.totalBytes - fs_info.usedBytes,
-                (fs_info.totalBytes - fs_info.usedBytes) * 100 / fs_info.totalBytes, fs_info.totalBytes);
-        prnt(String(s));
-        sprintf(s, str(CLI_SYSTEM_SPIFFS_OUT).c_str(), fs_info.blockSize, fs_info.pageSize);
+        size_t totalBytes, usedBytes;
+        FILE_SYSTEM.info(totalBytes, usedBytes);
+        sprintf(s, str(CLI_SYSTEM_RAM_OUT).c_str(), usedBytes, usedBytes * 100 / totalBytes, totalBytes - usedBytes,
+                (totalBytes - usedBytes) * 100 / totalBytes, totalBytes);
         prnt(String(s));
 #else
         FSInfo fs_info;
