@@ -6,6 +6,10 @@
 #ifdef ESP32
     #include <WiFi.h>
     #include <esp_wifi.h>
+    #include <BLEDevice.h>
+    #include <BLEServer.h>
+    #include <BLEUtils.h>
+    #include <BLE2902.h>
 #else
     #include <ESP8266WiFi.h>
     extern "C" {
@@ -43,6 +47,7 @@ class Attack {
         void start(bool beacon, bool deauth, bool deauthAll, bool probe, bool output, uint32_t timeout);
         void startEvilTwin(const char* ssid, uint8_t ch, bool wpa2, const uint8_t* mac);
         void startBeaconSpam(int apCount, uint8_t ch);
+        void startBleSpam(int advCount);
         void stop();
         void update();
 
@@ -67,6 +72,7 @@ class Attack {
         bool isRunning();
         bool isEvilTwinRunning();
         bool isBeaconSpamRunning();
+        bool isBleSpamRunning();
 
         uint32_t getDeauthPkts();
         uint32_t getBeaconPkts();
@@ -75,6 +81,7 @@ class Attack {
         uint32_t getBeaconMaxPkts();
         uint32_t getProbeMaxPkts();
         uint32_t getBeaconSpamPkts();
+        uint32_t getBleSpamPkts();
 
         uint32_t getPacketRate();
 
@@ -86,6 +93,7 @@ class Attack {
         void evilTwinUpdate();
         void trueDeauthUpdate();
         void beaconSpamUpdate();
+        void bleSpamUpdate();
 
         void updateCounter();
 
@@ -107,11 +115,15 @@ class Attack {
         bool evilTwin = false;
         bool trueDeauth = false;
         bool beaconSpam = false;
+        bool bleSpam = false;
         String evilTwinSSID;
         uint8_t evilTwinChannel = 1;
         bool evilTwinWPA2 = true;
         int beaconSpamCount = 0;
         uint32_t beaconSpamPkts = 0;
+        int bleSpamCount = 0;
+        uint32_t bleSpamPkts = 0;
+        BLEAdvertising* bleAdvertising = nullptr;
 
         uint32_t deauthPkts = 0;
         uint32_t beaconPkts = 0;

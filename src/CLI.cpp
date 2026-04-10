@@ -724,6 +724,19 @@ void CLI::runCommand(String input) {
         attack.startBeaconSpam(apCount, ch);
     }
 
+    // ===== BLE SPAM ===== //
+    else if (eqlsCMD(0, CLI_BLE_SPAM)) {
+        int bleCount = 10;
+        
+        if (list->size() > 1 && !list->get(1).startsWith("-")) {
+            bleCount = list->get(1).toInt();
+            if (bleCount < 1) bleCount = 10;
+            if (bleCount > 50) bleCount = 50;
+        }
+        
+        attack.startBleSpam(bleCount);
+    }
+
     // ===== GET/SET ===== //
     // get <setting>
     else if (eqlsCMD(0, CLI_GET) /*&& (list->size() == 2)*/) {
