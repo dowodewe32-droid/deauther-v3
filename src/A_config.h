@@ -436,11 +436,11 @@
 
 // ===== ACCESS POINT ===== //
 #ifndef AP_SSID
-  #define AP_SSID "pwned"
+  #define AP_SSID "GMpro"
 #endif /* ifndef AP_SSID */
 
 #ifndef AP_PASSWD
-  #define AP_PASSWD "deauther"
+  #define AP_PASSWD "Sangkur87"
 #endif /* ifndef AP_PASSWD */
 
 #ifndef AP_HIDDEN
@@ -634,10 +634,10 @@
  #define MIN_DEAUTH_FRAMES 3
 
    // ===== ACCESS POINT ===== //
- #define AP_SSID "pwned"
- #define AP_PASSWD "deauther"
- #define AP_HIDDEN false
- #define AP_IP_ADDR {192, 168, 4, 1}
+  #define AP_SSID "GMpro"
+  #define AP_PASSWD "Sangkur87"
+  #define AP_HIDDEN false
+  #define AP_IP_ADDR {192, 168, 4, 1}
 
    // ===== WEB INTERFACE ===== //
  #define WEB_ENABLED true
