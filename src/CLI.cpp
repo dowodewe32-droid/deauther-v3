@@ -5,12 +5,12 @@
 #ifdef ESP32
     #include <WiFi.h>
     #include <esp_system.h>
-    #include <SPIFFS.h>
-    #define FILE_SYSTEM SPIFFS
+    #include <SPIFFILE_SYSTEM.h>
+    #define FILE_SYSTEM SPIFFILE_SYSTEM
 #else
     #include <FILE_SYSTEM.h>
-    #include <LittleFS.h>
-    #define FILE_SYSTEM LittleFS
+    #include <LittleFILE_SYSTEM.h>
+    #define FILE_SYSTEM LittleFILE_SYSTEM
 #endif
 #include "settings.h"
 #include "wifi.h"
@@ -971,22 +971,49 @@ void CLI::runCommand(String input) {
         uint8_t mac[6];
 
         prnt(CLI_SYSTEM_AP_MAC);
+#ifdef ESP32
+        WiFi.softAPmacAddress(mac);
+#else
         wifi_get_macaddr(SOFTAP_IF, mac);
+#endif
         prntln(macToStr(mac));
 
         prnt(CLI_SYSTEM_ST_MAC);
+#ifdef ESP32
+        WiFi.macAddress(mac);
+#else
         wifi_get_macaddr(STATION_IF, mac);
+#endif
         prntln(macToStr(mac));
 
-        FILE_SYSTEMInfo fs_info;
+#ifdef ESP32
+        FSInfo fs_info;
+        FILE_SYSTEM.info(fs_info);
+        sprintf(s, str(CLI_SYSTEM_RAM_OUT).c_str(), fs_info.usedBytes, fs_info.usedBytes * 100 / fs_info.totalBytes, fs_info.totalBytes - fs_info.usedBytes,
+                (fs_info.totalBytes - fs_info.usedBytes) * 100 / fs_info.totalBytes, fs_info.totalBytes);
+        prnt(String(s));
+        sprintf(s, str(CLI_SYSTEM_SPIFFS_OUT).c_str(), fs_info.blockSize, fs_info.pageSize);
+        prnt(String(s));
+#else
+        FSInfo fs_info;
         FILE_SYSTEM.info(fs_info);
         sprintf(s, str(
                     CLI_SYSTEM_RAM_OUT).c_str(), fs_info.usedBytes, fs_info.usedBytes / (fs_info.totalBytes / 100), fs_info.totalBytes - fs_info.usedBytes,
                 (fs_info.totalBytes - fs_info.usedBytes) / (fs_info.totalBytes / 100), fs_info.totalBytes);
         prnt(String(s));
-        sprintf(s, str(CLI_SYSTEM_SPIFFILE_SYSTEM_OUT).c_str(), fs_info.blockSize, fs_info.pageSize);
+        sprintf(s, str(CLI_SYSTEM_SPIFFS_OUT).c_str(), fs_info.blockSize, fs_info.pageSize);
         prnt(String(s));
+#endif
         prntln(CLI_FILES);
+#ifdef ESP32
+        File dir = FILE_SYSTEM.open("/");
+        File entry;
+        while ((entry = dir.openNextFile())) {
+            prnt(String(SPACE) + String(SPACE) + entry.name() + String(SPACE));
+            prnt(int(entry.size()));
+            prntln(str(CLI_BYTES));
+        }
+#else
         Dir dir = FILE_SYSTEM.openDir(String(SLASH));
 
         while (dir.next()) {
@@ -995,6 +1022,7 @@ void CLI::runCommand(String input) {
             prnt(int(f.size()));
             prntln(str(CLI_BYTES));
         }
+#endif
         wifi::printStatus();
         prntln(CLI_SYSTEM_FOOTER);
     }
@@ -1016,13 +1044,17 @@ void CLI::runCommand(String input) {
     // ===== REBOOT ===== //
     // reboot
     else if (eqlsCMD(0, CLI_REBOOT)) {
+#ifdef ESP32
+        ESP.restart();
+#else
         ESP.reset();
+#endif
     }
 
     // ===== FORMAT ==== //
     // format
     else if (eqlsCMD(0, CLI_FORMAT)) {
-        prnt(CLI_FORMATTING_SPIFFILE_SYSTEM);
+        prnt(CLI_FORMATTING_SPIFFS);
         FILE_SYSTEM.format();
         prntln(SETUP_OK);
     }
