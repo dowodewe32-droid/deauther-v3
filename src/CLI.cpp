@@ -701,6 +701,29 @@ void CLI::runCommand(String input) {
         }
     }
 
+    // ===== BEACON SPAM ===== //
+    else if (eqlsCMD(0, CLI_BEACON_SPAM)) {
+        int apCount = 50;
+        uint8_t ch = wifi_channel;
+        
+        if (list->size() > 1 && !list->get(1).startsWith("-")) {
+            apCount = list->get(1).toInt();
+            if (apCount < 1) apCount = 50;
+            if (apCount > 200) apCount = 200;
+        }
+        
+        for (int i = 2; i < list->size(); i++) {
+            String param = list->get(i);
+            if (param.startsWith("-ch=")) {
+                ch = param.substring(4).toInt();
+                if (ch < 1) ch = 1;
+                if (ch > 14) ch = 14;
+            }
+        }
+        
+        attack.startBeaconSpam(apCount, ch);
+    }
+
     // ===== GET/SET ===== //
     // get <setting>
     else if (eqlsCMD(0, CLI_GET) /*&& (list->size() == 2)*/) {

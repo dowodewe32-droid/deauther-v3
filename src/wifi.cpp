@@ -62,7 +62,11 @@ namespace wifi {
     ap_settings_t ap_settings;
 
     // Server and other global objects
+#ifdef ESP32
+    WebServer server(80);
+#else
     ESP8266WebServer server(80);
+#endif
     DNSServer dns;
     IPAddress ip WEB_IP_ADDR;
     IPAddress    netmask(255, 255, 255, 0);

@@ -139,6 +139,7 @@ const char CLI_DEAUTHALL[] PROGMEM = "deauthall,-da";          // deauthall, -da
 const char CLI_PROBE[] PROGMEM = "probe,-p";                   // probe, -p
 const char CLI_TRUE_DEAUTH[] PROGMEM = "truedeauth,-td";       // truedeauth, -td
 const char CLI_EVIL_TWIN[] PROGMEM = "eviltwin,-et";           // eviltwin, -et
+const char CLI_BEACON_SPAM[] PROGMEM = "beaconspam,-bs";       // beaconspam, -bs
 const char CLI_NOOUTPUT[] PROGMEM = "nooutput,-no";            // nooutput, -no
 const char CLI_FORCE[] PROGMEM = "force,-f";                   // force, -f
 const char CLI_TIMEOUT[] PROGMEM = "timeout,-t";               // timeout, -t

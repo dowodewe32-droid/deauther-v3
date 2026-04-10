@@ -42,6 +42,7 @@ class Attack {
         void start();
         void start(bool beacon, bool deauth, bool deauthAll, bool probe, bool output, uint32_t timeout);
         void startEvilTwin(const char* ssid, uint8_t ch, bool wpa2, const uint8_t* mac);
+        void startBeaconSpam(int apCount, uint8_t ch);
         void stop();
         void update();
 
@@ -65,6 +66,7 @@ class Attack {
 
         bool isRunning();
         bool isEvilTwinRunning();
+        bool isBeaconSpamRunning();
 
         uint32_t getDeauthPkts();
         uint32_t getBeaconPkts();
@@ -72,6 +74,7 @@ class Attack {
         uint32_t getDeauthMaxPkts();
         uint32_t getBeaconMaxPkts();
         uint32_t getProbeMaxPkts();
+        uint32_t getBeaconSpamPkts();
 
         uint32_t getPacketRate();
 
@@ -82,6 +85,7 @@ class Attack {
         void probeUpdate();
         void evilTwinUpdate();
         void trueDeauthUpdate();
+        void beaconSpamUpdate();
 
         void updateCounter();
 
@@ -102,9 +106,12 @@ class Attack {
         bool deauthAll = false;
         bool evilTwin = false;
         bool trueDeauth = false;
+        bool beaconSpam = false;
         String evilTwinSSID;
         uint8_t evilTwinChannel = 1;
         bool evilTwinWPA2 = true;
+        int beaconSpamCount = 0;
+        uint32_t beaconSpamPkts = 0;
 
         uint32_t deauthPkts = 0;
         uint32_t beaconPkts = 0;

