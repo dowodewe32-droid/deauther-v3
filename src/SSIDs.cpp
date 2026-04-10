@@ -2,7 +2,13 @@
 
 #include "SSIDs.h"
 
-#include <LittleFS.h>
+#ifdef ESP32
+    #include <SPIFFS.h>
+    #define FS SPIFFS
+#else
+    #include <LittleFS.h>
+    #define FS LittleFS
+#endif
 #include "settings.h"
 
 SSIDs::SSIDs() {

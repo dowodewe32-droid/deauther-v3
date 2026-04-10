@@ -345,7 +345,11 @@ void setOutputPower(float dBm) {
 
     uint8_t val = (dBm * 4.0f);
 
-    system_phy_set_max_tpw(val);
+    #ifdef ESP32
+        esp_wifi_set_max_tx_power(val);
+    #else
+        system_phy_set_max_tpw(val);
+    #endif
 }
 
 /* ===== MAC ADDRESSES ===== */

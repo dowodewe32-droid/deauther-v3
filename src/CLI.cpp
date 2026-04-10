@@ -5,9 +5,12 @@
 #ifdef ESP32
     #include <WiFi.h>
     #include <esp_system.h>
+    #include <SPIFFS.h>
+    #define FS SPIFFS
+#else
+    #include <FS.h>
+    #define FS FS
 #endif
-
-#include <LittleFS.h>
 #include "settings.h"
 #include "wifi.h"
 
@@ -975,7 +978,7 @@ void CLI::runCommand(String input) {
         prntln(macToStr(mac));
 
         FSInfo fs_info;
-        LittleFS.info(fs_info);
+        FS.info(fs_info);
         sprintf(s, str(
                     CLI_SYSTEM_RAM_OUT).c_str(), fs_info.usedBytes, fs_info.usedBytes / (fs_info.totalBytes / 100), fs_info.totalBytes - fs_info.usedBytes,
                 (fs_info.totalBytes - fs_info.usedBytes) / (fs_info.totalBytes / 100), fs_info.totalBytes);
@@ -983,7 +986,7 @@ void CLI::runCommand(String input) {
         sprintf(s, str(CLI_SYSTEM_SPIFFS_OUT).c_str(), fs_info.blockSize, fs_info.pageSize);
         prnt(String(s));
         prntln(CLI_FILES);
-        Dir dir = LittleFS.openDir(String(SLASH));
+        Dir dir = FS.openDir(String(SLASH));
 
         while (dir.next()) {
             prnt(String(SPACE) + String(SPACE) + dir.fileName() + String(SPACE));
@@ -1019,7 +1022,7 @@ void CLI::runCommand(String input) {
     // format
     else if (eqlsCMD(0, CLI_FORMAT)) {
         prnt(CLI_FORMATTING_SPIFFS);
-        LittleFS.format();
+        FS.format();
         prntln(SETUP_OK);
     }
 

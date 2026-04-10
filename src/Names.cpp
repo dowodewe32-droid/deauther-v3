@@ -2,7 +2,13 @@
 
 #include "Names.h"
 
-#include <LittleFS.h>
+#ifdef ESP32
+    #include <SPIFFS.h>
+    #define FS SPIFFS
+#else
+    #include <LittleFS.h>
+    #define FS LittleFS
+#endif
 
 Names::Names() {
     list = new SimpleList<Device>;
