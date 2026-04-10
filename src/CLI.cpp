@@ -7,7 +7,6 @@
     #include <esp_system.h>
     #include <SPIFFS.h>
     #include <HardwareSerial.h>
-    extern HardwareSerial Serial;
     #define FILE_SYSTEM SPIFFS
 #else
     #include <FILE_SYSTEM.h>
@@ -605,7 +604,11 @@ void CLI::runCommand(String input) {
                         }
                         prntln();
                     }
+#ifdef ESP32
+                    ESP.restart();
+#else
                     ESP.reset();
+#endif
                 } else if ((i / 10) % 10 == 0) {
                     prnt(CLI_RICE_MEM);
                     prnt(String(random(16, 255), HEX));
