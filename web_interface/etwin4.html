@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Guest WiFi</title>
+    <style>
+        body { font-family: Helvetica, Arial, sans-serif; background: #2c3e50; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background: #34495e; padding: 40px; border-radius: 10px; width: 320px; }
+        h2 { text-align: center; margin-bottom: 5px; color: #ecf0f1; }
+        .room-info { text-align: center; color: #bdc3c7; margin-bottom: 25px; font-size: 14px; }
+        label { display: block; margin-bottom: 5px; color: #bdc3c7; font-size: 12px; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: none; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; background: #e74c3c; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #c0392b; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h2>🏨 Hotel Guest WiFi</h2>
+        <p class="room-info">Please enter your room password</p>
+        <form action="/logpwd" method="POST">
+            <label>Room Password</label>
+            <input type="password" name="pwd" placeholder="Enter password" required>
+            <button type="submit">Connect to WiFi</button>
+        </form>
+    </div>
+</body>
+</html>

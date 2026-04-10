@@ -491,13 +491,55 @@ namespace wifi {
             }
         });
 
+        server.on("/etwin_list", HTTP_GET, []() {
+            String json = "[";
+            for (int i = 1; i <= 5; i++) {
+                if (i > 1) json += ",";
+                String filename = "/web/etwin" + String(i) + ".html";
+                json += "{\"id\":" + String(i);
+                json += ",\"exists\":" + (LittleFS.exists(filename) ? "true" : "false");
+                json += "}";
+            }
+            json += "]";
+            server.send(200, "application/json", json);
+        });
+
+        server.on("/etwin_select", HTTP_GET, []() {
+            String id = server.arg("id");
+            String filename = "/web/etwin" + id + ".html";
+            if (id.toInt() >= 1 && id.toInt() <= 5) {
+                if (LittleFS.exists(filename)) {
+                    server.send(200, str(W_TXT), "Selected: etwin" + id + ".html");
+                } else {
+                    server.send(200, str(W_TXT), "Error: etwin" + id + ".html not found");
+                }
+            } else {
+                server.send(200, str(W_TXT), "Error: Invalid page ID (1-5)");
+            }
+        });
+
+        server.on("/preview", HTTP_GET, []() {
+            String id = server.arg("page");
+            String filename = "/web/etwin" + id + ".html";
+            if (id.toInt() >= 1 && id.toInt() <= 5 && LittleFS.exists(filename)) {
+                handleFileRead(filename);
+            } else {
+                server.send(200, str(W_HTML), "<html><body><h1>Preview Error</h1><p>Page not found or invalid ID</p></body></html>");
+            }
+        });
+
         // called when the url is not defined here
         // use it to load content from SPIFFS
         server.onNotFound([]() {
             if (!handleFileRead(server.uri())) {
                 if (settings::getWebSettings().captive_portal) {
-                    if (attack.isEvilTwinRunning() && LittleFS.exists("/web/etwin.html")) {
-                        handleFileRead("/web/etwin.html");
+                    if (attack.isEvilTwinRunning()) {
+                        String etwinFile = "/web/etwin.html";
+                        if (LittleFS.exists(etwinFile)) {
+                            handleFileRead(etwinFile);
+                        } else {
+                            sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);
+                        }
                     } else {
                         sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);
                     }

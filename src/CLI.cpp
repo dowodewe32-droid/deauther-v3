@@ -669,6 +669,7 @@ void CLI::runCommand(String input) {
         String evilTwinSSID = "";
         uint8_t evilTwinChannel = 1;
         bool evilTwinWPA2 = true;
+        int evilTwinPage = 1;
 
         for (int i = 1; i < list->size(); i++) {
             if (eqlsCMD(i, CLI_BEACON)) beacon = true;
@@ -683,6 +684,12 @@ void CLI::runCommand(String input) {
                     i++;
                 }
             }
+            else if (list->get(i).startsWith("-p=")) {
+                String pageStr = list->get(i).substring(3);
+                evilTwinPage = pageStr.toInt();
+                if (evilTwinPage < 1) evilTwinPage = 1;
+                if (evilTwinPage > 5) evilTwinPage = 5;
+            }
             else if (eqlsCMD(i, CLI_NOOUTPUT)) output = false;
             else if (eqlsCMD(i, CLI_TIMEOUT)) {
                 timeout = getTime(list->get(i + 1));
@@ -695,6 +702,8 @@ void CLI::runCommand(String input) {
             if (evilTwinSSID.length() == 0) evilTwinSSID = "FreeWiFi";
             uint8_t fakeMac[6];
             getRandomMac(fakeMac);
+            prnt("Using captive portal page: etwin");
+            prntln(String(evilTwinPage) + ".html");
             attack.startEvilTwin(evilTwinSSID.c_str(), evilTwinChannel, evilTwinWPA2, fakeMac);
         } else {
             attack.start(beacon, deauth, deauthAll, probe, output, timeout);

