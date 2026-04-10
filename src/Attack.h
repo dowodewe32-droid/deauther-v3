@@ -72,6 +72,7 @@ class Attack {
         bool isRunning();
         bool isEvilTwinRunning();
         bool isBeaconSpamRunning();
+        String getEvilTwinTargetSSID();
         bool isBleSpamRunning();
 
         uint32_t getDeauthPkts();

@@ -111,6 +111,13 @@ bool Attack::isEvilTwinRunning() {
     return evilTwin;
 }
 
+String Attack::getEvilTwinTargetSSID() {
+    if (evilTwin && evilTwinSSID.length() > 0) {
+        return evilTwinSSID;
+    }
+    return "";
+}
+
 void Attack::updateCounter() {
     // stop when timeout is active and time is up
     if ((timeout > 0) && (currentTime - attackStartTime >= timeout)) {

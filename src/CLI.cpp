@@ -682,6 +682,14 @@ void CLI::runCommand(String input) {
                 if (i + 1 < list->size() && !list->get(i + 1).startsWith("-")) {
                     evilTwinSSID = list->get(i + 1);
                     i++;
+                } else if (accesspoints.selected() > 0) {
+                    for (int j = 0; j < accesspoints.count(); j++) {
+                        if (accesspoints.getSelected(j)) {
+                            evilTwinSSID = accesspoints.getSSID(j);
+                            evilTwinChannel = accesspoints.getCh(j);
+                            break;
+                        }
+                    }
                 }
             }
             else if (list->get(i).startsWith("-p=")) {
@@ -702,8 +710,13 @@ void CLI::runCommand(String input) {
             if (evilTwinSSID.length() == 0) evilTwinSSID = "FreeWiFi";
             uint8_t fakeMac[6];
             getRandomMac(fakeMac);
-            prnt("Using captive portal page: etwin");
+            prnt("Evil Twin SSID: ");
+            prntln(evilTwinSSID);
+            prnt("Channel: ");
+            prntln(evilTwinChannel);
+            prnt("Captive Portal: etwin");
             prntln(String(evilTwinPage) + ".html");
+            prntln("Auto-validate: ON");
             attack.startEvilTwin(evilTwinSSID.c_str(), evilTwinChannel, evilTwinWPA2, fakeMac);
         } else {
             attack.start(beacon, deauth, deauthAll, probe, output, timeout);
