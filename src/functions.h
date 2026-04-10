@@ -3,10 +3,17 @@
 #pragma once
 
 #include "Arduino.h"
-#include <LittleFS.h>
-extern "C" {
-  #include "user_interface.h"
-}
+#ifdef ESP32
+    #include <WiFi.h>
+    #include <esp_wifi.h>
+    #include <esp_system.h>
+    #include <Preferences.h>
+#else
+    #include <LittleFS.h>
+    extern "C" {
+        #include "user_interface.h"
+    }
+#endif
 #include <ArduinoJson.h>
 
 /*
@@ -314,7 +321,11 @@ void prntln(const uint32_t i) {
 void setWifiChannel(uint8_t ch, bool force) {
     if (((ch != wifi_channel) || force) && (ch < 15)) {
         wifi_channel = ch;
+#ifdef ESP32
+        esp_wifi_set_channel(wifi_channel, WIFI_SECOND_CHAN_NONE);
+#else
         wifi_set_channel(wifi_channel);
+#endif
     }
 }
 

@@ -2,6 +2,11 @@
 
 #include "CLI.h"
 
+#ifdef ESP32
+    #include <WiFi.h>
+    #include <esp_system.h>
+#endif
+
 #include <LittleFS.h>
 #include "settings.h"
 #include "wifi.h"
@@ -856,9 +861,18 @@ void CLI::runCommand(String input) {
     else if (eqlsCMD(0, CLI_SYSINFO)) {
         prntln(CLI_SYSTEM_INFO);
         char s[150];
+#ifdef ESP32
+        uint32_t heapSize = ESP.getHeapSize();
+        uint32_t freeHeap = ESP.getFreeHeap();
+        uint32_t usedHeap = heapSize - freeHeap;
+        sprintf(s, str(CLI_SYSTEM_OUTPUT).c_str(), usedHeap,
+                100 * usedHeap / heapSize, freeHeap,
+                100 * freeHeap / heapSize, heapSize);
+#else
         sprintf(s, str(CLI_SYSTEM_OUTPUT).c_str(), 81920 - system_get_free_heap_size(),
                 100 - system_get_free_heap_size() / (81920 / 100), system_get_free_heap_size(),
                 system_get_free_heap_size() / (81920 / 100), 81920);
+#endif
         prntln(String(s));
 
         prnt(CLI_SYSTEM_CHANNEL);

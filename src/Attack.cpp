@@ -2,6 +2,10 @@
 
 #include "Attack.h"
 
+#ifdef ESP32
+    #include <esp_wifi.h>
+#endif
+
 #include "settings.h"
 
 Attack::Attack() {
@@ -445,7 +449,12 @@ bool Attack::sendPacket(uint8_t* packet, uint16_t packetSize, uint8_t ch, bool f
     setWifiChannel(ch, force_ch);
 
     // sent out packet
-    bool sent = wifi_send_pkt_freedom(packet, packetSize, 0) == 0;
+    bool sent = false;
+#ifdef ESP32
+    sent = esp_wifi_80211_tx(WIFI_IF_AP, packet, packetSize, false) == ESP_OK;
+#else
+    sent = wifi_send_pkt_freedom(packet, packetSize, 0) == 0;
+#endif
 
     if (sent) ++tmpPacketRate;
 

@@ -3,22 +3,21 @@
    https://github.com/spacehuhntech/esp8266_deauther
    ===================== */
 
+#ifdef ESP32
+    #include <WiFi.h>
+    #include <esp_system.h>
+#else
 extern "C" {
-    // Please follow this tutorial:
-    // https://github.com/spacehuhn/esp8266_deauther/wiki/Installation#compiling-using-arduino-ide
-    // And be sure to have the right board selected
   #include "user_interface.h"
 }
+#endif
 
 #include "EEPROMHelper.h"
 
 #include <ArduinoJson.h>
 #if ARDUINOJSON_VERSION_MAJOR != 5
-// The software was build using ArduinoJson v5.x
-// version 6 is still in beta at the time of writing
-// go to tools -> manage libraries, search for ArduinoJSON and install version 5
 #error Please upgrade/downgrade ArduinoJSON library to version 5!
-#endif // if ARDUINOJSON_VERSION_MAJOR != 5
+#endif
 
 #include "oui.h"
 #include "language.h"
@@ -34,7 +33,6 @@ extern "C" {
 
 #include "led.h"
 
-// Run-Time Variables //
 Names names;
 SSIDs ssids;
 Accesspoints accesspoints;
@@ -53,37 +51,43 @@ uint32_t currentTime  = 0;
 
 bool booted = false;
 
-void setup() {
-    // for random generator
-    randomSeed(os_random());
+#ifdef ESP32
+void promiscuousCallback(void* buf, void* vctrl) {
+    wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buf;
+    uint16_t len = pkt->rx_ctrl.sig_len;
+    scan.sniffer(pkt->payload, len);
+}
+#endif
 
-    // start serial
+void setup() {
+#ifdef ESP32
+    randomSeed(esp_random());
+#else
+    randomSeed(os_random());
+#endif
+
     Serial.begin(115200);
     Serial.println();
 
-    // start SPIFFS
     prnt(SETUP_MOUNT_SPIFFS);
-    // bool spiffsError = !LittleFS.begin();
     LittleFS.begin();
-    prntln(/*spiffsError ? SETUP_ERROR : */ SETUP_OK);
+    prntln(SETUP_OK);
 
-    // Start EEPROM
     EEPROMHelper::begin(EEPROM_SIZE);
 
 #ifdef FORMAT_SPIFFS
     prnt(SETUP_FORMAT_SPIFFS);
     LittleFS.format();
     prntln(SETUP_OK);
-#endif // ifdef FORMAT_SPIFFS
+#endif
 
 #ifdef FORMAT_EEPROM
     prnt(SETUP_FORMAT_EEPROM);
     EEPROMHelper::format(EEPROM_SIZE);
     prntln(SETUP_OK);
-#endif // ifdef FORMAT_EEPROM
+#endif
 
-    // Format SPIFFS when in boot-loop
-    if (/*spiffsError || */ !EEPROMHelper::checkBootNum(BOOT_COUNTER_ADDR)) {
+    if (!EEPROMHelper::checkBootNum(BOOT_COUNTER_ADDR)) {
         prnt(SETUP_FORMAT_SPIFFS);
         LittleFS.format();
         prntln(SETUP_OK);
@@ -95,37 +99,37 @@ void setup() {
         EEPROMHelper::resetBootNum(BOOT_COUNTER_ADDR);
     }
 
-    // get time
     currentTime = millis();
 
-    // load settings
-    #ifndef RESET_SETTINGS
+#ifndef RESET_SETTINGS
     settings::load();
-    #else // ifndef RESET_SETTINGS
+#else
     settings::reset();
     settings::save();
-    #endif // ifndef RESET_SETTINGS
+#endif
 
     wifi::begin();
+
+#ifdef ESP32
+    esp_wifi_set_promiscuous(true);
+    esp_wifi_promiscuous_rx_register(promiscuousCallback, NULL);
+#else
     wifi_set_promiscuous_rx_cb([](uint8_t* buf, uint16_t len) {
         scan.sniffer(buf, len);
     });
+#endif
 
-    // start display
     if (settings::getDisplaySettings().enabled) {
         displayUI.setup();
         displayUI.mode = DISPLAY_MODE::INTRO;
     }
 
-    // load everything else
     names.load();
     ssids.load();
     cli.load();
 
-    // create scan.json
     scan.setup();
 
-    // dis/enable serial command interface
     if (settings::getCLISettings().enabled) {
         cli.enable();
     } else {
@@ -134,34 +138,27 @@ void setup() {
         Serial.end();
     }
 
-    // start access point/web interface
     if (settings::getWebSettings().enabled) wifi::startAP();
 
-    // STARTED
     prntln(SETUP_STARTED);
-
-    // version
     prntln(DEAUTHER_VERSION);
 
-    // setup LED
     led::setup();
 
-    // setup reset button
     resetButton = new ButtonPullup(RESET_BUTTON);
 }
 
 void loop() {
     currentTime = millis();
 
-    led::update();   // update LED color
-    wifi::update();  // manage access point
-    attack.update(); // run attacks
+    led::update();
+    wifi::update();
+    attack.update();
     displayUI.update();
-    cli.update();    // read and run serial input
-    scan.update();   // run scan
-    ssids.update();  // run random mode, if enabled
+    cli.update();
+    scan.update();
+    ssids.update();
 
-    // auto-save
     if (settings::getAutosaveSettings().enabled
         && (currentTime - autosaveTime > settings::getAutosaveSettings().time)) {
         autosaveTime = currentTime;
@@ -175,7 +172,7 @@ void loop() {
         EEPROMHelper::resetBootNum(BOOT_COUNTER_ADDR);
 #ifdef HIGHLIGHT_LED
         displayUI.setupLED();
-#endif // ifdef HIGHLIGHT_LED
+#endif
     }
 
     resetButton->update();

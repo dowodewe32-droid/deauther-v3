@@ -2,8 +2,21 @@
 
 #include "Scan.h"
 
+#ifdef ESP32
+    #include <WiFi.h>
+    #include <esp_wifi.h>
+#endif
+
 #include "settings.h"
 #include "wifi.h"
+
+#ifdef ESP32
+void promiscuousCallback(void* buf, void* vctrl) {
+    wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buf;
+    uint16_t len = pkt->rx_ctrl.sig_len;
+    scan.sniffer(pkt->payload, len);
+}
+#endif
 
 Scan::Scan() {
     list = new SimpleList<uint16_t>;
@@ -108,7 +121,12 @@ void Scan::start(uint8_t mode, uint32_t time, uint8_t nextmode, uint32_t continu
 
         // enable sniffer
         wifi::stopAP();
+#ifdef ESP32
+        esp_wifi_set_promiscuous(true);
+        esp_wifi_promiscuous_rx_register(promiscuousCallback, NULL);
+#else
         wifi_promiscuous_enable(true);
+#endif
     }
 
     else if (mode == SCAN_MODE_SNIFFER) {
@@ -124,12 +142,21 @@ void Scan::start(uint8_t mode, uint32_t time, uint8_t nextmode, uint32_t continu
 
         // enable sniffer
         wifi::stopAP();
+#ifdef ESP32
+        esp_wifi_set_promiscuous(true);
+        esp_wifi_promiscuous_rx_register(promiscuousCallback, NULL);
+#else
         wifi_promiscuous_enable(true);
+#endif
     }
 
     /* Stop scan */
     else if (mode == SCAN_MODE_OFF) {
+#ifdef ESP32
+        esp_wifi_set_promiscuous(false);
+#else
         wifi_promiscuous_enable(false);
+#endif
 
         if (settings::getWebSettings().enabled) wifi::resumeAP();
         prntln(SC_STOPPED);
@@ -215,7 +242,11 @@ void Scan::update() {
 
     // Stations
     else if ((sniffTime > 0) && (currentTime > snifferStartTime + sniffTime)) {
+#ifdef ESP32
+        esp_wifi_set_promiscuous(false);
+#else
         wifi_promiscuous_enable(false);
+#endif
 
         if (scanMode == SCAN_MODE_STATIONS) {
             stations.sort();
@@ -238,9 +269,18 @@ void Scan::setChannel(uint8_t ch) {
     if (ch > 14) ch = 1;
     else if (ch < 1) ch = 14;
 
+#ifdef ESP32
+    esp_wifi_set_promiscuous(false);
+#else
     wifi_promiscuous_enable(0);
+#endif
     setWifiChannel(ch, true);
+#ifdef ESP32
+    esp_wifi_set_promiscuous(true);
+    esp_wifi_promiscuous_rx_register(promiscuousCallback, NULL);
+#else
     wifi_promiscuous_enable(1);
+#endif
 }
 
 void Scan::nextChannel() {

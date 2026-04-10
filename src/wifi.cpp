@@ -2,15 +2,28 @@
 
 #include "wifi.h"
 
-extern "C" {
-    #include "user_interface.h"
-}
+#ifdef ESP32
+    #include <WiFi.h>
+    #include <esp_wifi.h>
+#else
+    extern "C" {
+        #include "user_interface.h"
+    }
+    #include <ESP8266WiFi.h>
+#endif
 
-#include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-#include <ESP8266WebServer.h>
+#ifdef ESP32
+    #include <WebServer.h>
+#else
+    #include <ESP8266WebServer.h>
+#endif
 #include <DNSServer.h>
-#include <ESP8266mDNS.h>
+
+#ifndef ESP32
+    #include <ESP8266mDNS.h>
+#endif
+
 #include <LittleFS.h>
 
 #include "language.h"
@@ -498,10 +511,16 @@ namespace wifi {
 
     void stopAP() {
         if (mode == wifi_mode_t::ap) {
+#ifdef ESP32
+            esp_wifi_set_promiscuous(false);
+#else
             wifi_promiscuous_enable(0);
+#endif
             WiFi.persistent(false);
             WiFi.disconnect(true);
+#ifndef ESP32
             wifi_set_opmode(STATION_MODE);
+#endif
             prntln(W_STOPPED_AP);
             mode = wifi_mode_t::st;
         }
@@ -510,7 +529,11 @@ namespace wifi {
     void resumeAP() {
         if (mode != wifi_mode_t::ap) {
             mode = wifi_mode_t::ap;
+#ifdef ESP32
+            esp_wifi_set_promiscuous(false);
+#else
             wifi_promiscuous_enable(0);
+#endif
             WiFi.softAPConfig(ip, ip, netmask);
             WiFi.softAP(ap_settings.ssid, ap_settings.password, ap_settings.channel, ap_settings.hidden);
             prntln(W_STARTED_AP);
