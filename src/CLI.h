@@ -5,6 +5,7 @@
 #include "Arduino.h"
 #ifdef ESP32
     #include <WiFi.h>
+    #include <HardwareSerial.h>
 #else
     #include <ESP8266WiFi.h>
     extern "C" {
