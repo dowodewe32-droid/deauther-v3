@@ -129,32 +129,32 @@ uint8_t Accesspoints::getEnc(int num) {
 String Accesspoints::getEncStr(int num) {
     if (!check(num)) return String();
 
-    switch (getEnc(num)) {
+    uint8_t enc = getEnc(num);
+#ifdef ESP32
+    if (enc == 0) return String(DASH);
+    else if (enc == 2) return str(AP_WEP);
+    else if (enc == 3) return str(AP_WPA);
+    else if (enc == 4) return str(AP_WPA2);
+    else if (enc == 5) return str(AP_AUTO);
+#else
+    switch (enc) {
         case ENC_TYPE_NONE:
             return String(DASH);
-
             break;
-
         case ENC_TYPE_WEP:
             return str(AP_WEP);
-
             break;
-
         case ENC_TYPE_TKIP:
             return str(AP_WPA);
-
             break;
-
         case ENC_TYPE_CCMP:
             return str(AP_WPA2);
-
             break;
-
         case ENC_TYPE_AUTO:
             return str(AP_AUTO);
-
             break;
     }
+#endif
     return String(QUESTIONMARK);
 }
 
@@ -184,8 +184,11 @@ String Accesspoints::getVendorStr(int num) {
 
 bool Accesspoints::getHidden(int num) {
     if (!check(num)) return false;
-
+#ifdef ESP32
+    return false;
+#else
     return WiFi.isHidden(getID(num));
+#endif
 }
 
 bool Accesspoints::getSelected(int num) {
