@@ -6,7 +6,6 @@
     #include <WiFi.h>
     #include <esp_system.h>
     #include <SPIFFS.h>
-    #include <FS.h>
     #define FILE_SYSTEM SPIFFS
 #else
     #include <FILE_SYSTEM.h>
@@ -604,11 +603,7 @@ void CLI::runCommand(String input) {
                         }
                         prntln();
                     }
-#ifdef ESP32
-                    ESP.restart();
-#else
                     ESP.reset();
-#endif
                 } else if ((i / 10) % 10 == 0) {
                     prnt(CLI_RICE_MEM);
                     prnt(String(random(16, 255), HEX));
@@ -836,7 +831,7 @@ void CLI::runCommand(String input) {
         // Web
         else if (eqls(str, S_JSON_WEBINTERFACE)) prntln(settings::getWebSettings().enabled);
         else if (eqls(str, S_JSON_CAPTIVEPORTAL)) prntln(settings::getWebSettings().captive_portal);
-        else if (eqls(str, S_JSON_WEB_SPIFFILE_SYSTEM)) prntln(settings::getWebSettings().use_spiffs);
+        else if (eqls(str, S_JSON_WEB_SPIFFS)) prntln(settings::getWebSettings().use_spiffs);
         else if (eqls(str, S_JSON_LANG)) prntln(settings::getWebSettings().lang, 3);
 
         // CLI
@@ -899,7 +894,7 @@ void CLI::runCommand(String input) {
         // Web
         else if (eqls(str, S_JSON_WEBINTERFACE)) newSettings.web.enabled = boolVal;
         else if (eqls(str, S_JSON_CAPTIVEPORTAL)) newSettings.web.captive_portal = boolVal;
-        else if (eqls(str, S_JSON_WEB_SPIFFILE_SYSTEM)) newSettings.web.use_spiffs = boolVal;
+        else if (eqls(str, S_JSON_WEB_SPIFFS)) newSettings.web.use_spiffs = boolVal;
         else if (eqls(str, S_JSON_LANG)) strncpy(newSettings.web.lang, strVal.c_str(), 3);
 
         // CLI
@@ -992,10 +987,10 @@ void CLI::runCommand(String input) {
         prntln(macToStr(mac));
 
 #ifdef ESP32
-        size_t totalBytes, usedBytes;
-        FILE_SYSTEM.info(totalBytes, usedBytes);
-        sprintf(s, str(CLI_SYSTEM_RAM_OUT).c_str(), usedBytes, usedBytes * 100 / totalBytes, totalBytes - usedBytes,
-                (totalBytes - usedBytes) * 100 / totalBytes, totalBytes);
+        uint32_t total = FILE_SYSTEM.totalBytes();
+        uint32_t used = FILE_SYSTEM.usedBytes();
+        sprintf(s, str(CLI_SYSTEM_RAM_OUT).c_str(), used, used * 100 / total, total - used,
+                (total - used) * 100 / total, total);
         prnt(String(s));
 #else
         FSInfo fs_info;
