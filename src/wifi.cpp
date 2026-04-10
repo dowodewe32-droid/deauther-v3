@@ -465,7 +465,7 @@ namespace wifi {
         #endif /* ifdef USE_PROGMEM_WEB_FILES */
 
         server.on("/run", HTTP_GET, []() {
-            server.send(200, str(W_TXT), str(W_OK).c_str());
+            server.send(200, str(W_TXT), str(W_STATUS_OK).c_str());
             String input = server.arg("cmd");
             cli.exec(input);
         });
