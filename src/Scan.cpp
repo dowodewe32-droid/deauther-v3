@@ -10,6 +10,8 @@
 #include "settings.h"
 #include "wifi.h"
 
+extern Scan scan;
+
 #ifdef ESP32
 void promiscuousCallback(void* buf, void* vctrl) {
     wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buf;
