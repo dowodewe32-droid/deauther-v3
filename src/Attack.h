@@ -116,11 +116,13 @@ class Attack {
         bool trueDeauth = false;
         bool beaconSpam = false;
         bool bleSpam = false;
+        String evilTwinSSID;
+        uint8_t evilTwinChannel = 1;
+        bool evilTwinWPA2 = true;
+        int beaconSpamCount = 0;
+        uint32_t beaconSpamPkts = 0;
         int bleSpamCount = 0;
         uint32_t bleSpamPkts = 0;
-#ifdef ESP32
-        BLEAdvertising* bleAdvertising = nullptr;
-#endif
 
         uint32_t deauthPkts = 0;
         uint32_t beaconPkts = 0;
