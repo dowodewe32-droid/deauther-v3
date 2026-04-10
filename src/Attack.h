@@ -68,6 +68,7 @@ class Attack {
         bool sendProbe(uint8_t* mac, const char* ssid, uint8_t ch);
 
         bool sendPacket(uint8_t* packet, uint16_t packetSize, uint8_t ch, bool force_ch);
+        bool sendDeauthFrame(uint8_t* targetMac, uint8_t* apMac, uint8_t reason);
 
         bool isRunning();
         bool isEvilTwinRunning();
