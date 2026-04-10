@@ -497,7 +497,7 @@ namespace wifi {
                 if (i > 1) json += ",";
                 String filename = "/web/etwin" + String(i) + ".html";
                 json += "{\"id\":" + String(i);
-                json += ",\"exists\":" + (LittleFS.exists(filename) ? "true" : "false");
+                json += ",\"exists\":" + String(LittleFS.exists(filename) ? "true" : "false");
                 json += "}";
             }
             json += "]";
@@ -509,9 +509,9 @@ namespace wifi {
             String filename = "/web/etwin" + id + ".html";
             if (id.toInt() >= 1 && id.toInt() <= 5) {
                 if (LittleFS.exists(filename)) {
-                    server.send(200, str(W_TXT), "Selected: etwin" + id + ".html");
+                    server.send(200, str(W_TXT), String("Selected: etwin") + id + ".html");
                 } else {
-                    server.send(200, str(W_TXT), "Error: etwin" + id + ".html not found");
+                    server.send(200, str(W_TXT), String("Error: etwin") + id + ".html not found");
                 }
             } else {
                 server.send(200, str(W_TXT), "Error: Invalid page ID (1-5)");
