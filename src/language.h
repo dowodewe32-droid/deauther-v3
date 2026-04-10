@@ -141,6 +141,7 @@ const char CLI_TRUE_DEAUTH[] PROGMEM = "truedeauth,-td";       // truedeauth, -t
 const char CLI_EVIL_TWIN[] PROGMEM = "eviltwin,-et";           // eviltwin, -et
 const char CLI_BEACON_SPAM[] PROGMEM = "beaconspam,-bs";       // beaconspam, -bs
 const char CLI_BLE_SPAM[] PROGMEM = "blespam,-bl";           // blespam, -bl
+const char CLI_AGGRESSIVE[] PROGMEM = "aggressive,-agg";     // aggressive mode for ESP32
 const char CLI_NOOUTPUT[] PROGMEM = "nooutput,-no";            // nooutput, -no
 const char CLI_FORCE[] PROGMEM = "force,-f";                   // force, -f
 const char CLI_TIMEOUT[] PROGMEM = "timeout,-t";               // timeout, -t

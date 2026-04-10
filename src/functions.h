@@ -322,7 +322,14 @@ void setWifiChannel(uint8_t ch, bool force) {
     if (((ch != wifi_channel) || force) && (ch < 15)) {
         wifi_channel = ch;
 #ifdef ESP32
-        esp_wifi_set_channel(wifi_channel, WIFI_SECOND_CHAN_NONE);
+        // Try to set channel for packet injection
+        esp_err_t err = esp_wifi_set_channel(wifi_channel, WIFI_SECOND_CHAN_NONE);
+        if (err != ESP_OK) {
+            // If normal channel set fails, try stopping and restarting
+            esp_wifi_stop();
+            esp_wifi_set_channel(wifi_channel, WIFI_SECOND_CHAN_NONE);
+            esp_wifi_start();
+        }
 #else
         wifi_set_channel(wifi_channel);
 #endif

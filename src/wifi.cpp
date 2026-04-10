@@ -205,7 +205,6 @@ namespace wifi {
 
     // ===== PUBLIC ====== //
     void begin() {
-        // Set settings
         setPath("/web");
         setSSID(settings::getAccessPointSettings().ssid);
         setPassword(settings::getAccessPointSettings().password);
@@ -213,19 +212,27 @@ namespace wifi {
         setHidden(settings::getAccessPointSettings().hidden);
         setCaptivePortal(settings::getWebSettings().captive_portal);
 
-        // copy web files to SPIFFS
         if (settings::getWebSettings().use_spiffs) {
             copyWebFiles(false);
         }
 
-        // Set mode
         mode = wifi_mode_t::off;
         WiFi.mode(WIFI_OFF);
+        
+#ifdef ESP32
+        // ESP32 setup
+        esp_wifi_set_mac(WIFI_IF_STA, (uint8_t*)settings::getWifiSettings().mac_st);
+        esp_wifi_set_mac(WIFI_IF_AP, (uint8_t*)settings::getWifiSettings().mac_ap);
+        
+        // Enable STA mode for packet injection capability
+        wifi_mode_t mode_tmp;
+        esp_wifi_get_mode(&mode_tmp);
+        esp_wifi_set_mode(WIFI_MODE_STA);
+#else
         wifi_set_opmode(STATION_MODE);
-
-        // Set mac address
         wifi_set_macaddr(STATION_IF, (uint8_t*)settings::getWifiSettings().mac_st);
         wifi_set_macaddr(SOFTAP_IF, (uint8_t*)settings::getWifiSettings().mac_ap);
+#endif
     }
 
     String getMode() {

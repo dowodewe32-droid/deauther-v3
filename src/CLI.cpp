@@ -759,6 +759,34 @@ void CLI::runCommand(String input) {
         attack.startBleSpam(bleCount);
     }
 
+    // ===== AGGRESSIVE MODE (ESP32) ===== //
+    else if (eqlsCMD(0, CLI_AGGRESSIVE)) {
+#ifdef ESP32
+        prntln("Enabling Aggressive Mode for ESP32...");
+        
+        // Stop any current AP
+        wifi::stopAP();
+        
+        // Configure WiFi for max packet injection
+        esp_wifi_stop();
+        delay(100);
+        
+        wifi_config_t sta_config;
+        memset(&sta_config, 0, sizeof(sta_config));
+        strcpy((char*)sta_config.sta.ssid, "fake");
+        sta_config.sta.channel = wifi_channel;
+        esp_wifi_set_config(WIFI_IF_STA, &sta_config);
+        
+        esp_wifi_set_mode(WIFI_MODE_STA);
+        esp_wifi_start();
+        
+        prntln("Aggressive Mode: ON");
+        prntln("Sending deauth packets at max rate...");
+#else
+        prntln("Aggressive mode only works on ESP32!");
+#endif
+    }
+
     // ===== GET/SET ===== //
     // get <setting>
     else if (eqlsCMD(0, CLI_GET) /*&& (list->size() == 2)*/) {
