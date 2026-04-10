@@ -283,7 +283,7 @@ void DisplayUI::setup() {
             accesspoints.getSelected(selectedID) ? accesspoints.deselect(selectedID) : accesspoints.select(selectedID);
         });
         addMenuNode(&apMenu, D_CLONE, [this]() { // CLONE
-            ssids.add(accesspoints.getSSID(selectedID), accesspoints.getEnc(selectedID) != ENC_TYPE_NONE, 60, true);
+            ssids.add(accesspoints.getSSID(selectedID), accesspoints.getEnc(selectedID) != 1, 60, true);
             changeMenu(&showMenu);
             ssids.save(false);
         });
