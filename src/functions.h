@@ -12,6 +12,7 @@
     #include <SPIFFS.h>
     #include <FS.h>
     extern HardwareSerial Serial;
+    #define LittleFS SPIFFS
 #else
     #include <LittleFS.h>
     extern "C" {
