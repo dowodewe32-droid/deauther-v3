@@ -8,6 +8,10 @@
     #include <esp_wifi.h>
     #include <esp_system.h>
     #include <Preferences.h>
+    #include <HardwareSerial.h>
+    #include <SPIFFS.h>
+    #include <FS.h>
+    extern HardwareSerial Serial;
 #else
     #include <LittleFS.h>
     extern "C" {
