@@ -80,7 +80,9 @@ namespace led {
 
     // ===== PUBLIC ===== //
     void setup() {
+#ifndef ESP32
         analogWriteRange(0xff);
+#endif
 
 #if defined(LED_DIGITAL) || defined(LED_RGB)
         if (LED_PIN_R < 255) pinMode(LED_PIN_R, OUTPUT);
