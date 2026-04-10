@@ -7,6 +7,7 @@
     #include <esp_system.h>
     #include <SPIFFS.h>
     #include <HardwareSerial.h>
+    extern HardwareSerial Serial;
     #define FILE_SYSTEM SPIFFS
 #else
     #include <FILE_SYSTEM.h>
