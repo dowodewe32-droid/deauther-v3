@@ -5,12 +5,12 @@
 #ifdef ESP32
     #include <WiFi.h>
     #include <esp_system.h>
-    #include <SPIFFILE_SYSTEM.h>
-    #define FILE_SYSTEM SPIFFILE_SYSTEM
+    #include <SPIFFS.h>
+    #define FILE_SYSTEM SPIFFS
 #else
     #include <FILE_SYSTEM.h>
-    #include <LittleFILE_SYSTEM.h>
-    #define FILE_SYSTEM LittleFILE_SYSTEM
+    #include <LittleFS.h>
+    #define FILE_SYSTEM LittleFS
 #endif
 #include "settings.h"
 #include "wifi.h"
