@@ -125,7 +125,7 @@ void Scan::start(uint8_t mode, uint32_t time, uint8_t nextmode, uint32_t continu
         wifi::stopAP();
 #ifdef ESP32
         esp_wifi_set_promiscuous(true);
-        esp_wifi_promiscuous_rx_register(promiscuousCallback, NULL);
+        esp_wifi_set_promiscuous_rx_cb(promiscuousCallback);
 #else
         wifi_promiscuous_enable(true);
 #endif
@@ -146,7 +146,7 @@ void Scan::start(uint8_t mode, uint32_t time, uint8_t nextmode, uint32_t continu
         wifi::stopAP();
 #ifdef ESP32
         esp_wifi_set_promiscuous(true);
-        esp_wifi_promiscuous_rx_register(promiscuousCallback, NULL);
+        esp_wifi_set_promiscuous_rx_cb(promiscuousCallback);
 #else
         wifi_promiscuous_enable(true);
 #endif
@@ -279,7 +279,7 @@ void Scan::setChannel(uint8_t ch) {
     setWifiChannel(ch, true);
 #ifdef ESP32
     esp_wifi_set_promiscuous(true);
-    esp_wifi_promiscuous_rx_register(promiscuousCallback, NULL);
+    esp_wifi_set_promiscuous_rx_cb(promiscuousCallback);
 #else
     wifi_promiscuous_enable(1);
 #endif
