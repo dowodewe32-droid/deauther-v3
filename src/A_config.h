@@ -3,7 +3,13 @@
 #pragma once
 
 #define ENABLE_DEBUG
-#define DEBUG_PORT Serial
+#ifdef ESP32
+    #include <HardwareSerial.h>
+    extern HardwareSerial Serial;
+    #define DEBUG_PORT Serial
+#else
+    #define DEBUG_PORT Serial
+#endif
 #define DEBUG_BAUD 115200
 
 #define DEFAULT_ESP8266
