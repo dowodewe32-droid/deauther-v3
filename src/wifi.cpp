@@ -336,39 +336,23 @@ namespace wifi {
         prnt("Starting AP...\n");
         prnt("SSID: ");
         prntln(ap_settings.ssid);
-        prnt("PASS: ");
-        prntln(strlen(ap_settings.password) > 0 ? ap_settings.password : "(open)");
         
-        // Critical: WiFi OFF first
-        WiFi.mode(WIFI_OFF);
-        delay(100);
-        
-        // Set mode to AP
+        // MATCH MARAUDER EXACT ORDER:
+        // 1. Set mode to AP
         WiFi.mode(WIFI_AP);
-        delay(200);
         
-        // Start softAP - WITHOUT channel parameter first
-        bool apResult;
-        if (strlen(ap_settings.password) == 0) {
-            apResult = WiFi.softAP(ap_settings.ssid);
-        } else {
-            apResult = WiFi.softAP(ap_settings.ssid, ap_settings.password);
-        }
-        
-        prnt("softAP result: ");
-        prntln(apResult ? "OK" : "FAIL");
-        
-        // Wait for AP to fully start
-        delay(300);
-        
-        // Now configure IP
+        // 2. Configure softAP FIRST (like Marauder)
         WiFi.softAPConfig(ip, ip, netmask);
-        delay(100);
+        
+        // 3. THEN start softAP
+        if (strlen(ap_settings.password) == 0) {
+            WiFi.softAP(ap_settings.ssid);
+        } else {
+            WiFi.softAP(ap_settings.ssid, ap_settings.password);
+        }
         
         prnt("AP IP: ");
         prntln(WiFi.softAPIP());
-        prnt("AP MAC: ");
-        prntln(WiFi.softAPmacAddress());
         
         #else
         WiFi.softAPConfig(ip, ip, netmask);
@@ -378,7 +362,6 @@ namespace wifi {
         dns.setErrorReplyCode(DNSReplyCode::NoError);
         dns.start(53, "*", ip);
         
-        delay(100);
         MDNS.begin(WEB_URL);
 
         server.on("/list", HTTP_GET, handleFileList); // list directory
