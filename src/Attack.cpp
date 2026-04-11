@@ -477,27 +477,20 @@ bool Attack::sendPacket(uint8_t* packet, uint16_t packetSize, uint8_t ch, bool f
 
     bool sent = false;
 #ifdef ESP32
-    // ESP32 raw packet injection - try all interfaces
-    // Method 1: STA interface
-    if (esp_wifi_80211_tx(WIFI_IF_STA, packet, packetSize, false) == ESP_OK) {
-        sent = true;
-    }
-    // Method 2: AP interface  
-    else if (esp_wifi_80211_tx(WIFI_IF_AP, packet, packetSize, false) == ESP_OK) {
-        sent = true;
-    }
-    // Method 3: With en_sys_seq parameter (some firmwares support this)
-    else if (esp_wifi_80211_tx(WIFI_IF_STA, packet, packetSize, true) == ESP_OK) {
-        sent = true;
-    }
-    // Method 4: Try multiple times with slight delays
-    else {
-        for (int retry = 0; retry < 3; retry++) {
-            if (esp_wifi_80211_tx(WIFI_IF_STA, packet, packetSize, false) == ESP_OK) {
+    // ESP32 raw packet injection via esp_wifi_80211_tx
+    // The packet frame should be raw 802.11 without FCS
+    // Try AP interface first (better for injection without connection)
+    wifi_interface_t interfaces[] = {WIFI_IF_AP, WIFI_IF_STA};
+    
+    for (int i = 0; i < 2 && !sent; i++) {
+        for (int retry = 0; retry < 5 && !sent; retry++) {
+            // en_sys_seq=false allows raw frame injection without hardware sequence
+            esp_err_t err = esp_wifi_80211_tx(interfaces[i], packet, packetSize, false);
+            if (err == ESP_OK) {
                 sent = true;
                 break;
             }
-            delayMicroseconds(100);
+            delayMicroseconds(50);
         }
     }
 #else

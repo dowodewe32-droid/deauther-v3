@@ -259,14 +259,11 @@ namespace wifi {
         #endif
         
 #ifdef ESP32
-        // ESP32 setup
+        // ESP32 setup - use WiFi class to properly init wifi, then configure
+        WiFi.mode(WIFI_AP);  // Initialize and set mode to AP
+        delay(100);
         esp_wifi_set_mac(WIFI_IF_STA, (uint8_t*)settings::getWifiSettings().mac_st);
         esp_wifi_set_mac(WIFI_IF_AP, (uint8_t*)settings::getWifiSettings().mac_ap);
-        
-        // Enable STA mode for packet injection capability
-        wifi_mode_t mode_tmp;
-        esp_wifi_get_mode(&mode_tmp);
-        esp_wifi_set_mode(WIFI_MODE_STA);
 #else
         wifi_set_opmode(STATION_MODE);
         wifi_set_macaddr(STATION_IF, (uint8_t*)settings::getWifiSettings().mac_st);
