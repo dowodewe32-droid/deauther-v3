@@ -16,13 +16,18 @@ jobs:
         with:
           python-version: '3.11'
           
+      - name: Clean disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h /
+          
       - name: Install PlatformIO
         run: |
-          pip install platformio
+          pip install --no-cache-dir platformio
           
       - name: Build
         run: |
-          pio run -e esp32wroom
+          pio run -e esp32wroom --verbose 2>&1 | tail -100
           
       - name: Upload firmware
         uses: actions/upload-artifact@v4

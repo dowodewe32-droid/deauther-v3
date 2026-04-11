@@ -576,16 +576,26 @@ String leftRight(String a, String b, int len) {
 /* ===== SPIFFS ===== */
 bool progmemToSpiffs(const char* adr, int len, String path) {
     prnt(str(SETUP_COPYING) + path + str(SETUP_PROGMEM_TO_SPIFFS));
+    #ifdef ESP32
+    File f = SPIFFS.open(path, "w+");
+    #else
     File f = LittleFS.open(path, "w+");
+    #endif
 
     if (!f) {
         prntln(SETUP_ERROR);
         return false;
     }
 
+    #ifdef ESP32
+    for (int i = 0; i < len; i++) {
+        f.write(adr[i]);
+    }
+    #else
     for (int i = 0; i < len; i++) {
         f.write(pgm_read_byte_near(adr + i));
     }
+    #endif
     f.close();
 
     prntln(SETUP_OK);
