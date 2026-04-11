@@ -240,6 +240,12 @@ namespace wifi {
     // ===== PUBLIC ====== //
     void begin() {
         setPath("/web");
+        
+        #ifdef ESP32
+        prnt("[WIFI] Loading SSID from settings: ");
+        prntln(settings::getAccessPointSettings().ssid);
+        #endif
+        
         setSSID(settings::getAccessPointSettings().ssid);
         setPassword(settings::getAccessPointSettings().password);
         setChannel(settings::getWifiSettings().channel);
@@ -253,21 +259,15 @@ namespace wifi {
         #ifdef ESP32
         mode = (wifi_mode_t)WIFI_MODE_NULL;
         WiFi.mode(WIFI_OFF);
+        delay(100);
+        prnt("[WIFI] WiFi initialized\n");
         #else
         mode = wifi_mode_t::off;
         WiFi.mode(WIFI_OFF);
-        #endif
-        
-#ifdef ESP32
-        // ESP32 setup - Initialize WiFi with AP mode
-        // Note: Don't call WiFi.mode() here - let startAP() do it
-        WiFi.mode(WIFI_OFF);
-        delay(200);
-#else
         wifi_set_opmode(STATION_MODE);
         wifi_set_macaddr(STATION_IF, (uint8_t*)settings::getWifiSettings().mac_st);
         wifi_set_macaddr(SOFTAP_IF, (uint8_t*)settings::getWifiSettings().mac_ap);
-#endif
+        #endif
     }
 
     String getMode() {
@@ -333,31 +333,43 @@ namespace wifi {
      */
     void startAP() {
         #ifdef ESP32
-        prnt("Starting AP with SSID: ");
+        prnt("Starting AP...\n");
+        prnt("SSID: ");
         prntln(ap_settings.ssid);
-        prnt("Password: ");
-        prntln(ap_settings.password);
+        prnt("PASS: ");
+        prntln(strlen(ap_settings.password) > 0 ? ap_settings.password : "(open)");
         
-        // ESP32: Correct order - first set mode
-        WiFi.mode(WIFI_AP);
+        // Critical: WiFi OFF first
+        WiFi.mode(WIFI_OFF);
         delay(100);
         
-        // Start softAP FIRST, before softAPConfig!
+        // Set mode to AP
+        WiFi.mode(WIFI_AP);
+        delay(200);
+        
+        // Start softAP - WITHOUT channel parameter first
+        bool apResult;
         if (strlen(ap_settings.password) == 0) {
-            WiFi.softAP(ap_settings.ssid);
+            apResult = WiFi.softAP(ap_settings.ssid);
         } else {
-            WiFi.softAP(ap_settings.ssid, ap_settings.password);
+            apResult = WiFi.softAP(ap_settings.ssid, ap_settings.password);
         }
         
-        // Wait for AP_START event
-        delay(150);
+        prnt("softAP result: ");
+        prntln(apResult ? "OK" : "FAIL");
         
-        // THEN configure softAP IP settings
+        // Wait for AP to fully start
+        delay(300);
+        
+        // Now configure IP
         WiFi.softAPConfig(ip, ip, netmask);
+        delay(100);
         
-        prntln("AP started!");
         prnt("AP IP: ");
         prntln(WiFi.softAPIP());
+        prnt("AP MAC: ");
+        prntln(WiFi.softAPmacAddress());
+        
         #else
         WiFi.softAPConfig(ip, ip, netmask);
         WiFi.softAP(ap_settings.ssid, ap_settings.password, ap_settings.channel, ap_settings.hidden);
@@ -365,7 +377,8 @@ namespace wifi {
 
         dns.setErrorReplyCode(DNSReplyCode::NoError);
         dns.start(53, "*", ip);
-
+        
+        delay(100);
         MDNS.begin(WEB_URL);
 
         server.on("/list", HTTP_GET, handleFileList); // list directory

@@ -109,8 +109,7 @@ void setup() {
     wifi::begin();
 
 #ifdef ESP32
-    esp_wifi_set_promiscuous(true);
-    esp_wifi_set_promiscuous_rx_cb(promiscuousCallback);
+    // Don't set promiscuous here - let scan.setup() handle it
 #else
     wifi_set_promiscuous_rx_cb([](uint8_t* buf, uint16_t len) {
         scan.sniffer(buf, len);
@@ -136,7 +135,11 @@ void setup() {
         Serial.end();
     }
 
-    if (settings::getWebSettings().enabled) wifi::startAP();
+    if (settings::getWebSettings().enabled) {
+        prnt("[MAIN] Starting AP...\n");
+        wifi::startAP();
+        prnt("[MAIN] AP started\n");
+    }
 
     prntln(SETUP_STARTED);
     prntln(DEAUTHER_VERSION);
