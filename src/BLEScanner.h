@@ -33,6 +33,8 @@ public:
     String getDevicesJSON();
     
     void clear();
+    void addDevice(ble_device_t dev);
+    bool updateDevice(String address, ble_device_t dev);
     
 private:
     #ifdef ESP32

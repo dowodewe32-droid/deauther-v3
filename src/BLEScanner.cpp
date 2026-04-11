@@ -26,17 +26,8 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
         
         dev.lastSeen = millis();
         
-        bool found = false;
-        for (int i = 0; i < bleScanner.devices.size(); i++) {
-            if (bleScanner.devices.get(i).address == dev.address) {
-                bleScanner.devices.set(i, dev);
-                found = true;
-                break;
-            }
-        }
-        
-        if (!found && bleScanner.devices.size() < BLE_MAX_DEVICES) {
-            bleScanner.devices.add(dev);
+        if (!bleScanner.updateDevice(dev.address, dev)) {
+            bleScanner.addDevice(dev);
         }
     }
 };
@@ -119,4 +110,20 @@ String BLEScanner::getDevicesJSON() {
 
 void BLEScanner::clear() {
     devices.clear();
+}
+
+void BLEScanner::addDevice(ble_device_t dev) {
+    if (devices.size() < BLE_MAX_DEVICES) {
+        devices.add(dev);
+    }
+}
+
+bool BLEScanner::updateDevice(String address, ble_device_t dev) {
+    for (int i = 0; i < devices.size(); i++) {
+        if (devices.get(i).address == address) {
+            devices.get(i) = dev;
+            return true;
+        }
+    }
+    return false;
 }
