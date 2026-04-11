@@ -259,11 +259,10 @@ namespace wifi {
         #endif
         
 #ifdef ESP32
-        // ESP32 setup - use WiFi class to properly init wifi, then configure
-        WiFi.mode(WIFI_AP);  // Initialize and set mode to AP
-        delay(100);
-        esp_wifi_set_mac(WIFI_IF_STA, (uint8_t*)settings::getWifiSettings().mac_st);
-        esp_wifi_set_mac(WIFI_IF_AP, (uint8_t*)settings::getWifiSettings().mac_ap);
+        // ESP32 setup - Initialize WiFi with AP mode
+        // Note: Don't call WiFi.mode() here - let startAP() do it
+        WiFi.mode(WIFI_OFF);
+        delay(200);
 #else
         wifi_set_opmode(STATION_MODE);
         wifi_set_macaddr(STATION_IF, (uint8_t*)settings::getWifiSettings().mac_st);
@@ -340,19 +339,29 @@ namespace wifi {
         prntln(ap_settings.password);
         prnt("Channel: ");
         prntln(ap_settings.channel);
-        #endif
         
+        // ESP32: Set WiFi mode to AP first, then start softAP
+        WiFi.mode(WIFI_AP);
+        delay(100);
+        
+        // Configure softAP with IP settings
         WiFi.softAPConfig(ip, ip, netmask);
+        
+        // Start the AP
         bool apResult = WiFi.softAP(ap_settings.ssid, ap_settings.password, ap_settings.channel, ap_settings.hidden);
         
-        #ifdef ESP32
         if (apResult) {
             prntln("AP started successfully!");
             prnt("AP IP: ");
             prntln(WiFi.softAPIP());
+            prnt("AP MAC: ");
+            prntln(WiFi.softAPmacAddress());
         } else {
             prntln("AP FAILED to start!");
         }
+        #else
+        WiFi.softAPConfig(ip, ip, netmask);
+        WiFi.softAP(ap_settings.ssid, ap_settings.password, ap_settings.channel, ap_settings.hidden);
         #endif
 
         dns.setErrorReplyCode(DNSReplyCode::NoError);
@@ -733,6 +742,8 @@ namespace wifi {
         if (mode != (wifi_mode_t)WIFI_MODE_AP) {
             mode = (wifi_mode_t)WIFI_MODE_AP;
             esp_wifi_set_promiscuous(false);
+            WiFi.mode(WIFI_AP);
+            delay(100);
             WiFi.softAPConfig(ip, ip, netmask);
             WiFi.softAP(ap_settings.ssid, ap_settings.password, ap_settings.channel, ap_settings.hidden);
             prntln(W_STARTED_AP);
