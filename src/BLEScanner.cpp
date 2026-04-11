@@ -3,72 +3,77 @@
 BLEScanner bleScanner;
 
 #ifdef ESP32
-BLEScanner::MyAdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice advertisedDevice) {
-    ble_device_t dev;
-    
-    if (advertisedDevice.haveName()) {
-        dev.name = String(advertisedDevice.getName().c_str());
-    } else {
-        dev.name = "Unknown";
-    }
-    
-    dev.address = String(advertisedDevice.getAddress().toString().c_str());
-    dev.rssi = advertisedDevice.getRSSI();
-    
-    if (advertisedDevice.getAddressType() == BLE_ADDR_TYPE_PUBLIC) {
-        dev.type = "Public";
-    } else if (advertisedDevice.getAddressType() == BLE_ADDR_TYPE_RANDOM) {
-        dev.type = "Random";
-    } else {
-        dev.type = "Unknown";
-    }
-    
-    dev.lastSeen = millis();
-    
-    bool found = false;
-    for (int i = 0; i < bleScanner.devices.size(); i++) {
-        if (bleScanner.devices.get(i).address == dev.address) {
-            bleScanner.devices.set(i, dev);
-            found = true;
-            break;
+class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
+    void onResult(BLEAdvertisedDevice advertisedDevice) override {
+        ble_device_t dev;
+        
+        if (advertisedDevice.haveName()) {
+            dev.name = String(advertisedDevice.getName().c_str());
+        } else {
+            dev.name = "Unknown";
+        }
+        
+        dev.address = String(advertisedDevice.getAddress().toString().c_str());
+        dev.rssi = advertisedDevice.getRSSI();
+        
+        if (advertisedDevice.getAddressType() == BLE_ADDR_TYPE_PUBLIC) {
+            dev.type = "Public";
+        } else if (advertisedDevice.getAddressType() == BLE_ADDR_TYPE_RANDOM) {
+            dev.type = "Random";
+        } else {
+            dev.type = "Unknown";
+        }
+        
+        dev.lastSeen = millis();
+        
+        bool found = false;
+        for (int i = 0; i < bleScanner.devices.size(); i++) {
+            if (bleScanner.devices.get(i).address == dev.address) {
+                bleScanner.devices.set(i, dev);
+                found = true;
+                break;
+            }
+        }
+        
+        if (!found && bleScanner.devices.size() < BLE_MAX_DEVICES) {
+            bleScanner.devices.add(dev);
         }
     }
-    
-    if (!found && bleScanner.devices.size() < BLE_MAX_DEVICES) {
-        bleScanner.devices.add(dev);
-    }
-}
+};
+
+static MyAdvertisedDeviceCallbacks deviceCallbacks;
 #endif
 
 BLEScanner::BLEScanner() {
     scanning = false;
-    #ifdef ESP32
-    BLEDevice::init("");
-    pBLEScan = BLEDevice::getScan();
-    pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
-    pBLEScan->setActiveScan(true);
-    pBLEScan->setInterval(100);
-    pBLEScan->setWindow(99);
-    #endif
 }
 
 void BLEScanner::start(uint32_t duration) {
     #ifdef ESP32
     stop();
-    scanning = true;
-    scanDuration = duration;
-    scanStartTime = millis();
-    devices.clear();
     
-    pBLEScan->setActiveScan(true);
-    pBLEScan->start(duration / 1000, false);
+    BLEDevice::init("");
+    BLEScan* pBLEScan = BLEDevice::getScan();
+    if (pBLEScan) {
+        pBLEScan->setAdvertisedDeviceCallbacks(&deviceCallbacks);
+        pBLEScan->setActiveScan(true);
+        pBLEScan->setInterval(100);
+        pBLEScan->setWindow(99);
+        
+        scanning = true;
+        scanDuration = duration;
+        scanStartTime = millis();
+        devices.clear();
+        
+        pBLEScan->start(duration / 1000, false);
+    }
     #endif
 }
 
 void BLEScanner::stop() {
     #ifdef ESP32
     if (scanning) {
-        pBLEScan->stop();
+        BLEDevice::getScan()->stop();
         scanning = false;
     }
     #endif

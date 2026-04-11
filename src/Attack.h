@@ -75,8 +75,6 @@ class Attack {
         bool isBeaconSpamRunning();
         String getEvilTwinTargetSSID();
         bool isBleSpamRunning();
-        String getEvilTwinTargetSSID();
-        bool isBleSpamRunning();
         
         bool validatePassword(const char* ssid, const char* password);
         bool isValidating();
