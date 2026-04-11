@@ -51,6 +51,10 @@ uint32_t currentTime  = 0;
 
 bool booted = false;
 
+#ifdef ESP32
+extern void promiscuousCallback(void* buf, wifi_promiscuous_pkt_type_t type);
+#endif
+
 void setup() {
 #ifdef ESP32
     randomSeed(esp_random());
