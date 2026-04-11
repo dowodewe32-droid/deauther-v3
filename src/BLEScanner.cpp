@@ -86,11 +86,12 @@ uint16_t BLEScanner::getDeviceCount() {
     return devices.size();
 }
 
-ble_device_t* BLEScanner::getDevice(uint16_t index) {
+ble_device_t BLEScanner::getDevice(uint16_t index) {
+    ble_device_t empty = {"", "", 0, "", 0};
     if (index < devices.size()) {
-        return &devices.get(index);
+        return devices.get(index);
     }
-    return nullptr;
+    return empty;
 }
 
 String BLEScanner::getDevicesJSON() {

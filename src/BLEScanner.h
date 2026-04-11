@@ -29,7 +29,7 @@ public:
     
     bool isScanning();
     uint16_t getDeviceCount();
-    ble_device_t* getDevice(uint16_t index);
+    ble_device_t getDevice(uint16_t index);
     String getDevicesJSON();
     
     void clear();
