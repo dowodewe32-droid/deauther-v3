@@ -1,6 +1,6 @@
 #include "BLEScanner.h"
 
-BLEScanner bleScanner;
+extern BLEScanner bleScanner;
 
 #ifdef ESP32
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
