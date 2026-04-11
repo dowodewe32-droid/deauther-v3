@@ -83,10 +83,12 @@ void setup() {
     Serial.println("[3] Settings...");
 #ifndef RESET_SETTINGS
     settings::load();
+    // Force reset web settings to ensure AP works
+    settings::reset();
 #else
     settings::reset();
-    settings::save();
 #endif
+    settings::save();
     Serial.print("[3] SSID: ");
     Serial.println(settings::getAccessPointSettings().ssid);
     Serial.print("[3] PASS: ");
@@ -134,12 +136,12 @@ void setup() {
     }
 
     Serial.println("[6] Starting AP...");
-    if (settings::getWebSettings().enabled) {
-        wifi::startAP();
-        Serial.println("[6] AP started!");
-    } else {
-        Serial.println("[6] Web disabled!");
-    }
+    
+    // FORCE enable web settings (in case EEPROM has old/corrupt settings)
+    settings::webSettings.enabled = true;
+    
+    wifi::startAP();
+    Serial.println("[6] AP started!");
 
     prntln(SETUP_STARTED);
     prntln(DEAUTHER_VERSION);
