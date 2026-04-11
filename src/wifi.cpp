@@ -247,8 +247,13 @@ namespace wifi {
             copyWebFiles(false);
         }
 
+        #ifdef ESP32
+        mode = (wifi_mode_t)WIFI_MODE_NULL;
+        WiFi.mode(WIFI_OFF);
+        #else
         mode = wifi_mode_t::off;
         WiFi.mode(WIFI_OFF);
+        #endif
         
 #ifdef ESP32
         // ESP32 setup
@@ -268,7 +273,11 @@ namespace wifi {
 
     String getMode() {
         switch (mode) {
+            #ifdef ESP32
+            case (wifi_mode_t)WIFI_MODE_NULL:
+            #else
             case wifi_mode_t::off:
+            #endif
                 return "OFF";
             case wifi_mode_t::ap:
                 return "AP";
@@ -697,7 +706,11 @@ namespace wifi {
     }
 
     void update() {
+        #ifdef ESP32
+        if ((mode != (wifi_mode_t)WIFI_MODE_NULL) && !scan.isScanning()) {
+        #else
         if ((mode != wifi_mode_t::off) && !scan.isScanning()) {
+        #endif
             server.handleClient();
             dns.processNextRequest();
         }
