@@ -33,7 +33,7 @@
 #include "Attack.h"
 #include "Scan.h"
 
-extern bool progmemToSpifFILE_SYSTEM(const char* adr, int len, String path);
+extern bool progmemToSpiffs(const char* adr, int len, String path);
 
 #include "webfiles.h"
 
@@ -41,11 +41,13 @@ extern Scan   scan;
 extern CLI    cli;
 extern Attack attack;
 
+#ifndef ESP32
 typedef enum wifi_mode_t {
     off = 0,
     ap  = 1,
     st  = 2
 } wifi_mode_t;
+#endif
 
 typedef struct ap_settings_t {
     char    path[33];

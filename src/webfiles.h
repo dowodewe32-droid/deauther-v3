@@ -6,6 +6,8 @@
 #define LittleFS SPIFFS
 #endif
 
+#include "functions.h"
+
 // comment that out if you want to save program memory and know how to upload the web files to the SPIFFS manually
 #define USE_PROGMEM_WEB_FILES 
 
