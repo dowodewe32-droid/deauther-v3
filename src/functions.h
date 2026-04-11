@@ -20,6 +20,7 @@
     }
 #endif
 #include <ArduinoJson.h>
+#include "oui.h"
 
 /*
    Here is a collection of useful functions and variables.

@@ -8,6 +8,7 @@
     #include <WebServer.h>
     #include <DNSServer.h>
     #include <SPIFFS.h>
+    #include <ESPmDNS.h>
 #else
     extern "C" {
         #include "user_interface.h"
@@ -245,7 +246,7 @@ namespace wifi {
         setHidden(settings::getAccessPointSettings().hidden);
         setCaptivePortal(settings::getWebSettings().captive_portal);
 
-        if (settings::getWebSettings().use_spifFILE_SYSTEM) {
+        if (settings::getWebSettings().use_spiffs) {
             copyWebFiles(false);
         }
 
@@ -274,12 +275,20 @@ namespace wifi {
     }
 
     String getMode() {
+        #ifdef ESP32
         switch (mode) {
-            #ifdef ESP32
             case (wifi_mode_t)WIFI_MODE_NULL:
-            #else
+                return "OFF";
+            case (wifi_mode_t)WIFI_MODE_AP:
+                return "AP";
+            case (wifi_mode_t)WIFI_MODE_STA:
+                return "ST";
+            default:
+                return String();
+        }
+        #else
+        switch (mode) {
             case wifi_mode_t::off:
-            #endif
                 return "OFF";
             case wifi_mode_t::ap:
                 return "AP";
@@ -288,6 +297,7 @@ namespace wifi {
             default:
                 return String();
         }
+        #endif
     }
 
     void printStatus() {
@@ -339,7 +349,7 @@ namespace wifi {
         #ifdef USE_PROGMEM_WEB_FILES
         // ================================================================
         // paste here the output of the webConverter.py
-        if (!settings::getWebSettings().use_spifFILE_SYSTEM) {
+        if (!settings::getWebSettings().use_spiffs) {
             server.on("/", HTTP_GET, []() {
                 sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);
             });
@@ -444,7 +454,7 @@ namespace wifi {
             });
         }
         server.on("/lang/default.lang", HTTP_GET, []() {
-            if (!settings::getWebSettings().use_spifFILE_SYSTEM) {
+            if (!settings::getWebSettings().use_spiffs) {
                 if (String(settings::getWebSettings().lang) == "hu") sendProgmem(hulang, sizeof(hulang), W_JSON);
                 else if (String(settings::getWebSettings().lang) == "ja") sendProgmem(jalang, sizeof(jalang), W_JSON);
                 else if (String(settings::getWebSettings().lang) == "nl") sendProgmem(nllang, sizeof(nllang), W_JSON);
@@ -672,7 +682,8 @@ namespace wifi {
         server.begin();
         #ifdef ESP32
         mode = (wifi_mode_t)WIFI_MODE_AP;
-        #else
+        #endif
+        #ifndef ESP32
         mode = wifi_mode_t::ap;
         #endif
 
@@ -684,22 +695,21 @@ namespace wifi {
         #ifdef ESP32
         if (mode == (wifi_mode_t)WIFI_MODE_AP) {
             esp_wifi_set_promiscuous(false);
+            WiFi.persistent(false);
+            WiFi.disconnect(true);
+            prntln(W_STOPPED_AP);
+            mode = (wifi_mode_t)WIFI_MODE_STA;
+        }
         #else
         if (mode == wifi_mode_t::ap) {
             wifi_promiscuous_enable(0);
-        #endif
             WiFi.persistent(false);
             WiFi.disconnect(true);
-        #ifndef ESP32
             wifi_set_opmode(STATION_MODE);
-        #endif
             prntln(W_STOPPED_AP);
-            #ifdef ESP32
-            mode = (wifi_mode_t)WIFI_MODE_STA;
-            #else
             mode = wifi_mode_t::st;
-            #endif
         }
+        #endif
     }
 
     void resumeAP() {
@@ -707,15 +717,19 @@ namespace wifi {
         if (mode != (wifi_mode_t)WIFI_MODE_AP) {
             mode = (wifi_mode_t)WIFI_MODE_AP;
             esp_wifi_set_promiscuous(false);
-        #else
-        if (mode != wifi_mode_t::ap) {
-            mode = wifi_mode_t::ap;
-            wifi_promiscuous_enable(0);
-        #endif
             WiFi.softAPConfig(ip, ip, netmask);
             WiFi.softAP(ap_settings.ssid, ap_settings.password, ap_settings.channel, ap_settings.hidden);
             prntln(W_STARTED_AP);
         }
+        #else
+        if (mode != wifi_mode_t::ap) {
+            mode = wifi_mode_t::ap;
+            wifi_promiscuous_enable(0);
+            WiFi.softAPConfig(ip, ip, netmask);
+            WiFi.softAP(ap_settings.ssid, ap_settings.password, ap_settings.channel, ap_settings.hidden);
+            prntln(W_STARTED_AP);
+        }
+        #endif
     }
 
     void update() {
