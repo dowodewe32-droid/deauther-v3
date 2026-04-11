@@ -333,8 +333,27 @@ namespace wifi {
         }
      */
     void startAP() {
+        #ifdef ESP32
+        prnt("Starting AP with SSID: ");
+        prntln(ap_settings.ssid);
+        prnt("Password: ");
+        prntln(ap_settings.password);
+        prnt("Channel: ");
+        prntln(ap_settings.channel);
+        #endif
+        
         WiFi.softAPConfig(ip, ip, netmask);
-        WiFi.softAP(ap_settings.ssid, ap_settings.password, ap_settings.channel, ap_settings.hidden);
+        bool apResult = WiFi.softAP(ap_settings.ssid, ap_settings.password, ap_settings.channel, ap_settings.hidden);
+        
+        #ifdef ESP32
+        if (apResult) {
+            prntln("AP started successfully!");
+            prnt("AP IP: ");
+            prntln(WiFi.softAPIP());
+        } else {
+            prntln("AP FAILED to start!");
+        }
+        #endif
 
         dns.setErrorReplyCode(DNSReplyCode::NoError);
         dns.start(53, "*", ip);
