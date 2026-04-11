@@ -726,3 +726,56 @@ bool Attack::isBleSpamRunning() {
 uint32_t Attack::getBleSpamPkts() {
     return bleSpamPkts;
 }
+
+bool Attack::validatePassword(const char* ssid, const char* password) {
+    #ifdef ESP32
+    if (validatingPassword) return false;
+    
+    validatingPassword = true;
+    passwordValid = false;
+    validationResult = "Testing: " + String(ssid);
+    
+    WiFi.disconnect(true, true);
+    delay(100);
+    
+    WiFi.begin(ssid, password);
+    
+    uint32_t startTime = millis();
+    uint32_t timeout = 10000;
+    
+    while (WiFi.status() != WL_CONNECTED && millis() - startTime < timeout) {
+        delay(100);
+        if (WiFi.status() == WL_CONNECT_FAILED) {
+            validatingPassword = false;
+            validationResult = "FAILED";
+            passwordValid = false;
+            WiFi.disconnect(true, true);
+            return false;
+        }
+    }
+    
+    validatingPassword = false;
+    
+    if (WiFi.status() == WL_CONNECTED) {
+        passwordValid = true;
+        validationResult = "SUCCESS! Connected to " + String(ssid);
+        WiFi.disconnect(true, true);
+        return true;
+    } else {
+        passwordValid = false;
+        validationResult = "FAILED";
+        WiFi.disconnect(true, true);
+        return false;
+    }
+    #else
+    return false;
+    #endif
+}
+
+bool Attack::isValidating() {
+    return validatingPassword;
+}
+
+String Attack::getValidationResult() {
+    return validationResult;
+}

@@ -75,7 +75,13 @@ class Attack {
         bool isBeaconSpamRunning();
         String getEvilTwinTargetSSID();
         bool isBleSpamRunning();
-
+        String getEvilTwinTargetSSID();
+        bool isBleSpamRunning();
+        
+        bool validatePassword(const char* ssid, const char* password);
+        bool isValidating();
+        String getValidationResult();
+        
         uint32_t getDeauthPkts();
         uint32_t getBeaconPkts();
         uint32_t getProbePkts();
@@ -125,7 +131,11 @@ class Attack {
         uint32_t beaconSpamPkts = 0;
         int bleSpamCount = 0;
         uint32_t bleSpamPkts = 0;
-
+        
+        bool validatingPassword = false;
+        bool passwordValid = false;
+        String validationResult = "";
+        
         uint32_t deauthPkts = 0;
         uint32_t beaconPkts = 0;
         uint32_t probePkts  = 0;

