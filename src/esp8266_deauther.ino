@@ -66,47 +66,43 @@ void setup() {
 
     Serial.begin(115200);
     Serial.println();
-
+    Serial.println("========== DEAUTHER BOOT ==========");
+    
+    Serial.println("[1] SPIFFS...");
     prnt(SETUP_MOUNT_SPIFFS);
     LittleFS.begin();
     prntln(SETUP_OK);
+    Serial.println("[1] OK");
 
+    Serial.println("[2] EEPROM...");
     EEPROMHelper::begin(EEPROM_SIZE);
-
-#ifdef FORMAT_SPIFFS
-    prnt(SETUP_FORMAT_SPIFFS);
-    LittleFS.format();
-    prntln(SETUP_OK);
-#endif
-
-#ifdef FORMAT_EEPROM
-    prnt(SETUP_FORMAT_EEPROM);
-    EEPROMHelper::format(EEPROM_SIZE);
-    prntln(SETUP_OK);
-#endif
-
-    if (!EEPROMHelper::checkBootNum(BOOT_COUNTER_ADDR)) {
-        prnt(SETUP_FORMAT_SPIFFS);
-        LittleFS.format();
-        prntln(SETUP_OK);
-
-        prnt(SETUP_FORMAT_EEPROM);
-        EEPROMHelper::format(EEPROM_SIZE);
-        prntln(SETUP_OK);
-
-        EEPROMHelper::resetBootNum(BOOT_COUNTER_ADDR);
-    }
+    Serial.println("[2] OK");
 
     currentTime = millis();
 
+    Serial.println("[3] Settings...");
 #ifndef RESET_SETTINGS
     settings::load();
 #else
     settings::reset();
     settings::save();
 #endif
+    Serial.print("[3] SSID: ");
+    Serial.println(settings::getAccessPointSettings().ssid);
+    Serial.print("[3] PASS: ");
+    Serial.println(settings::getAccessPointSettings().password);
+    Serial.println("[3] OK");
 
+    Serial.println("[4] WiFi...");
     wifi::begin();
+    Serial.println("[4] OK");
+
+#ifdef ESP32
+#else
+    wifi_set_promiscuous_rx_cb([](uint8_t* buf, uint16_t len) {
+        scan.sniffer(buf, len);
+    });
+#endif
 
 #ifdef ESP32
     // Don't set promiscuous here - let scan.setup() handle it
@@ -126,23 +122,28 @@ void setup() {
     cli.load();
 
     scan.setup();
-
+    
+    Serial.println("[5] CLI...");
     if (settings::getCLISettings().enabled) {
         cli.enable();
+        Serial.println("[5] CLI enabled");
     } else {
         prntln(SETUP_SERIAL_WARNING);
-        Serial.flush();
-        Serial.end();
+        Serial.println("[5] CLI disabled - Serial will stay ON for debug");
+        // DON'T end serial - keep it for debugging!
     }
 
+    Serial.println("[6] Starting AP...");
     if (settings::getWebSettings().enabled) {
-        prnt("[MAIN] Starting AP...\n");
         wifi::startAP();
-        prnt("[MAIN] AP started\n");
+        Serial.println("[6] AP started!");
+    } else {
+        Serial.println("[6] Web disabled!");
     }
 
     prntln(SETUP_STARTED);
     prntln(DEAUTHER_VERSION);
+    Serial.println("========== BOOT COMPLETE ==========");
 
     led::setup();
 
