@@ -34,6 +34,11 @@
   * - test/finish dislplay.printf() on mbed-os
   */
 
+#ifdef ESP32
+#include <HardwareSerial.h>
+extern HardwareSerial Serial;
+#endif
+
 #include "OLEDDisplay.h"
 
 OLEDDisplay::OLEDDisplay() {
