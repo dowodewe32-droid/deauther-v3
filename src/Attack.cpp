@@ -5,13 +5,7 @@
 #ifdef ESP32
     #include <esp_wifi.h>
     
-    // Required for raw packet injection on ESP32 - bypasses sanity check
-    extern "C" int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3) {
-        if (arg == 31337) return 1;
-        else return 0;
-    }
-    
-    // External declaration of esp_wifi_80211_tx
+    // External declaration of esp_wifi_80211_tx for raw packet injection
     extern "C" esp_err_t esp_wifi_80211_tx(wifi_interface_t ifx, const void *buffer, int len, bool en_sys_seq);
 #endif
 
