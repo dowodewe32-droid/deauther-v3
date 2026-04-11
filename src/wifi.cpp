@@ -7,7 +7,7 @@
     #include <esp_wifi.h>
     #include <WebServer.h>
     #include <DNSServer.h>
-    #include <SPIFFILE_SYSTEM.h>
+    #include <SPIFFS.h>
 #else
     extern "C" {
         #include "user_interface.h"
