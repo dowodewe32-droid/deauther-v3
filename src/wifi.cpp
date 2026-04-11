@@ -34,8 +34,6 @@
 #include "Attack.h"
 #include "Scan.h"
 
-extern bool progmemToSpiffs(const char* adr, int len, String path);
-
 #include "webfiles.h"
 
 extern Scan   scan;
