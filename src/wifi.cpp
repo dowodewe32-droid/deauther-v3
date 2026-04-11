@@ -337,28 +337,27 @@ namespace wifi {
         prntln(ap_settings.ssid);
         prnt("Password: ");
         prntln(ap_settings.password);
-        prnt("Channel: ");
-        prntln(ap_settings.channel);
         
-        // ESP32: Set WiFi mode to AP first, then start softAP
+        // ESP32: Correct order - first set mode
         WiFi.mode(WIFI_AP);
         delay(100);
         
-        // Configure softAP with IP settings
+        // Start softAP FIRST, before softAPConfig!
+        if (strlen(ap_settings.password) == 0) {
+            WiFi.softAP(ap_settings.ssid);
+        } else {
+            WiFi.softAP(ap_settings.ssid, ap_settings.password);
+        }
+        
+        // Wait for AP_START event
+        delay(150);
+        
+        // THEN configure softAP IP settings
         WiFi.softAPConfig(ip, ip, netmask);
         
-        // Start the AP
-        bool apResult = WiFi.softAP(ap_settings.ssid, ap_settings.password, ap_settings.channel, ap_settings.hidden);
-        
-        if (apResult) {
-            prntln("AP started successfully!");
-            prnt("AP IP: ");
-            prntln(WiFi.softAPIP());
-            prnt("AP MAC: ");
-            prntln(WiFi.softAPmacAddress());
-        } else {
-            prntln("AP FAILED to start!");
-        }
+        prntln("AP started!");
+        prnt("AP IP: ");
+        prntln(WiFi.softAPIP());
         #else
         WiFi.softAPConfig(ip, ip, netmask);
         WiFi.softAP(ap_settings.ssid, ap_settings.password, ap_settings.channel, ap_settings.hidden);
