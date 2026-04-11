@@ -21,9 +21,9 @@
 #endif
 
 #ifdef ESP32
-    #define FILE_SYSTEM SPIFFILE_SYSTEM
+    #define FILE_SYSTEM SPIFFS
 #else
-    #define FILE_SYSTEM LittleFILE_SYSTEM
+    #define FILE_SYSTEM LittleFS
 #endif
 
 #include "language.h"
@@ -668,37 +668,48 @@ namespace wifi {
         });
 
         server.begin();
+        #ifdef ESP32
+        mode = (wifi_mode_t)WIFI_MODE_AP;
+        #else
         mode = wifi_mode_t::ap;
+        #endif
 
         prntln(W_STARTED_AP);
         printStatus();
     }
 
     void stopAP() {
-        if (mode == wifi_mode_t::ap) {
-#ifdef ESP32
+        #ifdef ESP32
+        if (mode == (wifi_mode_t)WIFI_MODE_AP) {
             esp_wifi_set_promiscuous(false);
-#else
+        #else
+        if (mode == wifi_mode_t::ap) {
             wifi_promiscuous_enable(0);
-#endif
+        #endif
             WiFi.persistent(false);
             WiFi.disconnect(true);
-#ifndef ESP32
+        #ifndef ESP32
             wifi_set_opmode(STATION_MODE);
-#endif
+        #endif
             prntln(W_STOPPED_AP);
+            #ifdef ESP32
+            mode = (wifi_mode_t)WIFI_MODE_STA;
+            #else
             mode = wifi_mode_t::st;
+            #endif
         }
     }
 
     void resumeAP() {
+        #ifdef ESP32
+        if (mode != (wifi_mode_t)WIFI_MODE_AP) {
+            mode = (wifi_mode_t)WIFI_MODE_AP;
+            esp_wifi_set_promiscuous(false);
+        #else
         if (mode != wifi_mode_t::ap) {
             mode = wifi_mode_t::ap;
-#ifdef ESP32
-            esp_wifi_set_promiscuous(false);
-#else
             wifi_promiscuous_enable(0);
-#endif
+        #endif
             WiFi.softAPConfig(ip, ip, netmask);
             WiFi.softAP(ap_settings.ssid, ap_settings.password, ap_settings.channel, ap_settings.hidden);
             prntln(W_STARTED_AP);
