@@ -13,7 +13,7 @@
 extern Scan scan;
 
 #ifdef ESP32
-void promiscuousCallback(void* buf, void* vctrl) {
+void promiscuousCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
     wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buf;
     uint16_t len = pkt->rx_ctrl.sig_len;
     scan.sniffer(pkt->payload, len);
@@ -125,7 +125,7 @@ void Scan::start(uint8_t mode, uint32_t time, uint8_t nextmode, uint32_t continu
         wifi::stopAP();
 #ifdef ESP32
         esp_wifi_set_promiscuous(true);
-        esp_wifi_set_promiscuous_rx_cb(promiscuousCallback);
+        esp_wifi_promiscuous_rx_register(promiscuousCallback, NULL);
 #else
         wifi_promiscuous_enable(true);
 #endif
@@ -146,7 +146,7 @@ void Scan::start(uint8_t mode, uint32_t time, uint8_t nextmode, uint32_t continu
         wifi::stopAP();
 #ifdef ESP32
         esp_wifi_set_promiscuous(true);
-        esp_wifi_set_promiscuous_rx_cb(promiscuousCallback);
+        esp_wifi_promiscuous_rx_register(promiscuousCallback, NULL);
 #else
         wifi_promiscuous_enable(true);
 #endif
