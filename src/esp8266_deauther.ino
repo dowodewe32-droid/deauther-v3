@@ -6,9 +6,6 @@
 #ifdef ESP32
     #include <WiFi.h>
     #include <esp_system.h>
-    #include <esp_wifi.h>
-    #include <SPIFFS.h>
-    #define LittleFS SPIFFS
 #else
 extern "C" {
   #include "user_interface.h"
@@ -55,7 +52,7 @@ uint32_t currentTime  = 0;
 bool booted = false;
 
 #ifdef ESP32
-void promiscuousCallback(void* buf, void* vctrl) {
+void promiscuousCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
     wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buf;
     uint16_t len = pkt->rx_ctrl.sig_len;
     scan.sniffer(pkt->payload, len);
