@@ -55,11 +55,11 @@
 // #define AVATAR_5W_E14_LAMP
 
 // Forces formatting of SPIFFS and EEPROM ot startup
-#define FORMAT_SPIFFS
-#define FORMAT_EEPROM
+// #define FORMAT_SPIFFS
+// #define FORMAT_EEPROM
 
 // Forces a reset of all settings at startup
-#define RESET_SETTINGS
+// #define RESET_SETTINGS
 
 // ========== CONFIGS ========== //
 
