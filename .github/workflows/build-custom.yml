@@ -26,25 +26,14 @@ jobs:
       - name: Build ESP32 firmware
         run: |
           cd /home/runner/work/deauther-v3/deauther-v3
-          ls -la
           pio run -e esp32wroom 2>&1
-          
-      - name: List build files
-        if: always()
-        run: |
-          cd /home/runner/work/deauther-v3/deauther-v3
-          ls -la .pio/build/esp32wroom/ 2>/dev/null || echo "Build directory not found"
-          ls -la .pio/build/esp32wroom/*.bin 2>/dev/null || echo "No bin files"
           
       - name: Create complete flash image
         if: success()
         run: |
           cd /home/runner/work/deauther-v3/deauther-v3
-          BUILD_DIR=.pio/build/esp32wroom
           
           python3 << 'EOF'
-          import struct
-          
           BOOTLOADER_ADDR = 0x1000
           PARTITIONS_ADDR = 0x8000
           APP_ADDR = 0x10000
@@ -66,46 +55,17 @@ jobs:
               f.write(b'\xff' * (APP_ADDR - (PARTITIONS_ADDR + len(partitions))))
               f.write(firmware)
           
-          print(f"Bootloader: {len(bootloader)} bytes")
-          print(f"Partitions: {len(partitions)} bytes")
-          print(f"Firmware: {len(firmware)} bytes")
-          print(f"Complete image created: complete_flash_custom.bin")
+          print(f"Complete image: {len(bootloader) + len(partitions) + len(firmware)} bytes")
           EOF
-          
-          ls -la complete_flash_custom.bin
-          
-      - name: Create Release
-        if: success()
-        id: create_release
-        run: |
-          cd /home/runner/work/deauther-v3/deauther-v3
-          
-          # Create or update release
-          RELEASE_TAG="custom-v$(date +%Y%m%d-%H%M%S)"
-          
-          RESPONSE=$(curl -s -X POST "https://api.github.com/repos/${{ github.repository }}/releases" \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"tag_name\":\"$RELEASE_TAG\",\"name\":\"Custom ESP32 Deauther\",\"body\":\"Complete flash image ready to flash at 0x0\",\"prerelease\":true}")
-          
-          echo "RELEASE_TAG=$RELEASE_TAG"
-          echo "$RESPONSE" | grep -o '"id":[0-9]*' | head -1
-          RELEASE_ID=$(echo "$RESPONSE" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
-          echo "RELEASE_ID=$RELEASE_ID" >> $GITHUB_ENV
           
       - name: Upload to Release
         if: success()
         run: |
           cd /home/runner/work/deauther-v3/deauther-v3
           
-          # Get release ID
-          RELEASES=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases" \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}")
-          
-          RELEASE_ID=$(echo "$RELEASES" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
-          
-          # Upload asset
-          curl -s -X POST "https://uploads.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=complete_flash_custom.bin" \
+          RESPONSE=$(curl -s -X POST "https://api.github.com/repos/${{ github.repository }}/releases/307981417/assets?name=complete_flash_custom_v2.bin" \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Content-Type: application/octet-stream" \
-            --data-binary @complete_flash_custom.bin | grep -o '"browser_download_url":"[^"]*"'
+            --data-binary @complete_flash_custom.bin)
+          
+          echo "$RESPONSE" | grep -o '"browser_download_url":"[^"]*"'
