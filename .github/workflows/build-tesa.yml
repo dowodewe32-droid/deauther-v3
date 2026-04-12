@@ -1,0 +1,40 @@
+name: Build TESA Stock Firmware
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-tesa-stock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Clean disk
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          
+      - name: Install PlatformIO
+        run: pip install --no-cache-dir platformio
+          
+      - name: Clone working ESP32-Deauther
+        run: |
+          cd /tmp
+          git clone https://github.com/tesa-klebeband/ESP32-Deauther
+          
+      - name: Build TESA firmware
+        run: |
+          cd /tmp/ESP32-Deauther
+          pio run -e esp32doit-devkit-v1 2>&1
+          ls -la .pio/build/esp32doit-devkit-v1/
+          
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: tesa-stock-firmware
+          path: /tmp/ESP32-Deauther/.pio/build/esp32doit-devkit-v1/firmware.bin
