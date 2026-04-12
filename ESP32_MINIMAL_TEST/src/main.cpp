@@ -1,6 +1,6 @@
 /* =====================
-   ESP8266 DEAUTHER - MINIMAL TEST VERSION
-   Only tests if AP works
+   ESP8266 DEAUTHER V3 - BRUCE STYLE INIT
+   Uses Bruce ESP WiFi initialization pattern
    ===================== */
 
 #ifdef ESP32
@@ -32,32 +32,37 @@ const IPAddress ap_subnet(255, 255, 255, 0);
 
 void setup() {
     Serial.begin(115200);
+    delay(500);
     Serial.println();
     Serial.println("==========================================");
-    Serial.println("  ESP8266 DEAUTHER V3 - MINIMAL TEST");
+    Serial.println("  ESP8266 DEAUTHER V3 - BRUCE STYLE");
     Serial.println("==========================================");
-    Serial.println();
-    
-    // Force settings reset
-    EEPROM.begin(4096);
-    EEPROM.put(0, 0xDEADBEEF);  // Magic number to trigger reset
-    EEPROM.commit();
-    EEPROM.end();
     
     #ifdef ESP32
-    Serial.println("[1] ESP32 WiFi Init");
+    Serial.println("\n[1] ESP32 WiFi Setup (Bruce Style)");
+    
+    // Step 1: Force WiFi OFF first
+    Serial.println("[2] WiFi.mode(WIFI_OFF)");
     WiFi.mode(WIFI_OFF);
     delay(200);
     
-    Serial.println("[2] Setting WiFi Mode to WIFI_AP");
-    WiFi.mode(WIFI_AP);
+    // Step 2: Set max TX power (BRUCE STYLE - THIS IS KEY!)
+    Serial.println("[3] Setting max TX power...");
+    esp_wifi_set_max_tx_power(80);  // 80 = 20dBm max power
     delay(100);
     
-    Serial.println("[3] Configuring softAP IP");
+    // Step 3: Set WiFi mode to AP
+    Serial.println("[4] WiFi.mode(WIFI_AP)");
+    WiFi.mode(WIFI_AP);
+    delay(200);
+    
+    // Step 4: Configure softAP IP (BEFORE softAP!)
+    Serial.println("[5] WiFi.softAPConfig()");
     WiFi.softAPConfig(ap_ip, ap_gateway, ap_subnet);
     delay(100);
     
-    Serial.println("[4] Starting softAP...");
+    // Step 5: Start softAP
+    Serial.println("[6] WiFi.softAP()");
     Serial.print("    SSID: ");
     Serial.println(ap_ssid);
     Serial.print("    Password: ");
@@ -69,43 +74,47 @@ void setup() {
     
     delay(500);
     
-    Serial.print("[5] AP IP: ");
+    // Step 6: Verify
+    Serial.print("[7] AP IP: ");
     Serial.println(WiFi.softAPIP());
     
-    Serial.print("[6] AP MAC: ");
+    Serial.print("[8] AP MAC: ");
     Serial.println(WiFi.softAPmacAddress());
     
-    Serial.print("[7] Stations connected: ");
-    Serial.println(WiFi.softAPgetStationNum());
+    Serial.print("[9] TX Power: ");
+    int8_t power;
+    esp_wifi_get_max_tx_power(&power);
+    Serial.println(power);
     
     #else
+    // ESP8266
     WiFi.softAPConfig(ap_ip, ap_gateway, ap_subnet);
     WiFi.softAP(ap_ssid, ap_password);
     Serial.print("AP IP: ");
     Serial.println(WiFi.softAPIP());
     #endif
     
-    Serial.println("[8] Starting DNS Server...");
+    // DNS Server
+    Serial.println("[10] Starting DNS...");
     dnsServer.start(53, "*", ap_ip);
     
-    Serial.println("[9] Starting Web Server...");
+    // Web Server
+    Serial.println("[11] Starting Web Server...");
     server.on("/", [](){
         String html = "<html><head>";
-        html += "<title>ESP32 Deauther</title>";
+        html += "<title>ESP32 Deauther V3</title>";
         html += "<style>";
         html += "body{font-family:Arial;padding:20px;background:#1a1a2e;color:#fff;}";
         html += "h1{color:#667eea;}";
-        html += ".status{background:#16213e;padding:20px;border-radius:10px;margin:10px 0;}";
-        html += ".btn{background:#667eea;color:#fff;padding:15px 30px;border:none;border-radius:5px;cursor:pointer;}";
+        html += ".card{background:#16213e;padding:20px;border-radius:10px;margin:10px 0;}";
         html += "</style></head><body>";
         html += "<h1>ESP8266 DEAUTHER V3</h1>";
-        html += "<div class='status'>";
-        html += "<p><strong>AP Status:</strong> WORKING</p>";
+        html += "<div class='card'>";
+        html += "<p><strong>Status:</strong> WORKING!</p>";
         html += "<p><strong>SSID:</strong> " + String(ap_ssid) + "</p>";
-        html += "<p><strong>IP:</strong> 192.168.4.1</p>";
-        html += "<p><strong>Web Interface:</strong> Ready</p>";
+        html += "<p><strong>Password:</strong> " + String(ap_password) + "</p>";
+        html += "<p><strong>AP IP:</strong> 192.168.4.1</p>";
         html += "</div>";
-        html += "<p>Firmware: MINIMAL TEST VERSION</p>";
         html += "</body></html>";
         server.send(200, "text/html", html);
     });
@@ -113,11 +122,9 @@ void setup() {
     
     Serial.println();
     Serial.println("==========================================");
-    Serial.println("  SETUP COMPLETE - AP SHOULD BE VISIBLE");
+    Serial.println("  SETUP COMPLETE!");
+    Serial.println("  Search WiFi 'GMpro' on your device!");
     Serial.println("==========================================");
-    Serial.println();
-    Serial.println("Search for WiFi 'GMpro' on your device!");
-    Serial.println("Connect and open browser to 192.168.4.1");
 }
 
 void loop() {
@@ -128,13 +135,11 @@ void loop() {
     #endif
     server.handleClient();
     
-    // Print station count every 5 seconds
-    static uint32_t last_check = 0;
-    if (millis() - last_check > 5000) {
-        last_check = millis();
+    static uint32_t last = 0;
+    if (millis() - last > 5000) {
+        last = millis();
         #ifdef ESP32
-        Serial.print("[Status] Stations connected: ");
-        Serial.println(WiFi.softAPgetStationNum());
+        Serial.printf("[Status] Stations: %d\n", WiFi.softAPgetStationNum());
         #endif
     }
 }
