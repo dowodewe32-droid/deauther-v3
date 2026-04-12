@@ -66,7 +66,7 @@ void setup() {
 
     Serial.begin(115200);
     Serial.println();
-    Serial.println("========== GMpro87dev bun TESA BOOT ==========");
+    Serial.println("========== GMpro87dev BOOT ==========");
     
     Serial.println("[1] SPIFFS...");
     prnt(SETUP_MOUNT_SPIFFS);

@@ -81,7 +81,7 @@ namespace wifi {
         server.on("/", [](){
             server.send(200, "text/html", 
                 "<html><body>"
-                "<h1>GMpro87dev bun TESA</h1>"
+                "<h1>GMpro87dev</h1>"
                 "<p>AP is working!</p>"
                 "<p>SSID: " + ap_ssid + "</p>"
                 "</body></html>");

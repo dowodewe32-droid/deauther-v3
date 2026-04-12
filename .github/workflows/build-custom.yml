@@ -1,4 +1,4 @@
-name: Build GMpro87dev bun TESA
+name: Build GMpro87dev Firmware
 
 on:
   workflow_dispatch:
@@ -6,24 +6,13 @@ on:
     branches: [master]
 
 jobs:
-  build-esp32:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-          
-      - name: Debug workspace
-        run: |
-          echo "=== Workspace ==="
-          ls -la /home/runner/work/deauther-v3/deauther-v3/
-          echo ""
-          echo "=== Data/Web ==="
-          ls -la /home/runner/work/deauther-v3/deauther-v3/data/web/ 2>/dev/null || echo "No dir"
-          echo ""
-          echo "=== Disk ==="
-          df -h
           
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -32,66 +21,49 @@ jobs:
           
       - name: Clean disk
         run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /root/.platformio
           df -h
           
-      - name: Clone TESA base repo
-        run: |
-          cd /tmp
-          rm -rf ESP32-Deauther
-          git clone --depth 1 https://github.com/tesa-klebeband/ESP32-Deauther
-          ls -la /tmp/ESP32-Deauther/
-          
       - name: Install PlatformIO
-        run: |
-          pip install --no-cache-dir platformio
-          pio --version
-          
-      - name: Copy custom web files
-        run: |
-          mkdir -p /tmp/ESP32-Deauther/data/web
-          cp -r /home/runner/work/deauther-v3/deauther-v3/data/web/* /tmp/ESP32-Deauther/data/web/
-          ls -la /tmp/ESP32-Deauther/data/web/
+        run: pip install --no-cache-dir platformio
           
       - name: Build firmware
         run: |
-          cd /tmp/ESP32-Deauther
-          pio run -e esp32doit-devkit-v1 2>&1 | tail -50
+          cd /home/runner/work/deauther-v3/deauther-v3
+          pio run -e esp32wroom 2>&1 | tee /tmp/build.log
           
-      - name: List build files
-        if: always()
+      - name: Check build result
+        id: result
         run: |
-          cd /tmp/ESP32-Deauther
-          find .pio/build -name "*.bin" -exec ls -la {} \;
+          if [ -f ".pio/build/esp32wroom/firmware.bin" ]; then
+            echo "BUILD_SUCCESS=true" >> $GITHUB_OUTPUT
+            echo "Build berhasil!"
+            ls -la .pio/build/esp32wroom/*.bin
+          else
+            echo "BUILD_SUCCESS=false" >> $GITHUB_OUTPUT
+            echo "Build GAGAL!"
+            cat /tmp/build.log | tail -50
+          fi
           
       - name: Create flash image
-        id: flash
+        if: success()
         run: |
-          cd /tmp/ESP32-Deauther
-          
-          if [ ! -f ".pio/build/esp32doit-devkit-v1/bootloader.bin" ]; then
-            echo "ERROR: Build files not found!"
-            exit 1
-          fi
+          cd /home/runner/work/deauther-v3/deauther-v3
           
           python3 << 'PYEOF'
           import os
-          
-          build_dir = ".pio/build/esp32doit-devkit-v1"
           BOOTLOADER_ADDR = 0x1000
           PARTITIONS_ADDR = 0x8000
           APP_ADDR = 0x10000
           
-          with open(f'{build_dir}/bootloader.bin', 'rb') as f:
+          with open('.pio/build/esp32wroom/bootloader.bin', 'rb') as f:
               bootloader = f.read()
-          
-          with open(f'{build_dir}/partitions.bin', 'rb') as f:
+          with open('.pio/build/esp32wroom/partitions.bin', 'rb') as f:
               partitions = f.read()
-          
-          with open(f'{build_dir}/firmware.bin', 'rb') as f:
+          with open('.pio/build/esp32wroom/firmware.bin', 'rb') as f:
               firmware = f.read()
           
-          with open('complete_flash.bin', 'wb') as f:
+          with open('GMpro87dev_complete_flash.bin', 'wb') as f:
               f.write(b'\xff' * BOOTLOADER_ADDR)
               f.write(bootloader)
               f.write(b'\xff' * (PARTITIONS_ADDR - (BOOTLOADER_ADDR + len(bootloader))))
@@ -99,35 +71,22 @@ jobs:
               f.write(b'\xff' * (APP_ADDR - (PARTITIONS_ADDR + len(partitions))))
               f.write(firmware)
           
-          print(f"Bootloader: {len(bootloader)} bytes")
-          print(f"Partitions: {len(partitions)} bytes")
-          print(f"Firmware: {len(firmware)} bytes")
-          print(f"Complete: {os.path.getsize('complete_flash.bin')} bytes")
+          print(f"Complete flash: {os.path.getsize('GMpro87dev_complete_flash.bin')} bytes")
           PYEOF
           
-          ls -la complete_flash.bin
+          ls -la GMpro87dev_complete_flash.bin
           
       - name: Upload to Release
         if: success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cd /tmp/ESP32-Deauther
+          cd /home/runner/work/deauther-v3/deauther-v3
           
-          echo "Uploading complete_flash.bin..."
-          curl -s -X POST \
-            "https://uploads.github.com/repos/dowodewe32-droid/deauther-v3/releases/308011086/assets?name=GMpro87dev_bun_TESA_complete_flash.bin" \
+          RESP=$(curl -s -X POST \
+            "https://uploads.github.com/repos/dowodewe32-droid/deauther-v3/releases/308016127/assets?name=GMpro87dev_v1.0_complete_flash.bin" \
             -H "Authorization: token $GH_TOKEN" \
             -H "Content-Type: application/octet-stream" \
-            --data-binary @complete_flash.bin | tee /tmp/upload1.json
+            --data-binary @GMpro87dev_complete_flash.bin)
           
-          echo ""
-          echo "Uploading firmware.bin..."
-          curl -s -X POST \
-            "https://uploads.github.com/repos/dowodewe32-droid/deauther-v3/releases/308011086/assets?name=GMpro87dev_bun_TESA_firmware.bin" \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Content-Type: application/octet-stream" \
-            --data-binary @.pio/build/esp32doit-devkit-v1/firmware.bin | tee /tmp/upload2.json
-          
-          echo ""
-          echo "=== Upload Complete ==="
+          echo "$RESP" | python3 -c "import json,sys; d=json.load(sys.stdin); print('URL:', d.get('browser_download_url', d.get('message','ERROR')))"

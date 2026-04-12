@@ -612,8 +612,8 @@
 #endif // ifndef WEB_URL
 
 // ======== CONSTANTS ========== //
-// GMpro87dev bun TESA
-#define DEAUTHER_VERSION "GMpro87dev bun TESA v1.0"
+// GMpro87dev
+#define DEAUTHER_VERSION "GMpro87dev v1.0"
 #define DEAUTHER_VERSION_MAJOR 1
 #define DEAUTHER_VERSION_MINOR 0
 #define DEAUTHER_VERSION_REVISION 0
