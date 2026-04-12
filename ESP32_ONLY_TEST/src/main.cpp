@@ -1,44 +1,33 @@
-// ESP32 WiFi AP ONLY - NO WEB SERVER, NO DNS
-// Pure WiFi test only
-
 #include <WiFi.h>
+#include <esp_wifi.h>
+#include "types.h"
+#include "web_interface.h"
+#include "deauth.h"
+#include "definitions.h"
 
-const char* ssid = "GMpro";
-const char* password = "Sangkur87";
+int curr_channel = 1;
 
 void setup() {
-    Serial.begin(115200);
-    delay(300);
-    Serial.println("\n=== ESP32 WiFi AP TEST ===\n");
-    
-    Serial.println("1. WiFi.mode(WIFI_AP)");
-    WiFi.mode(WIFI_AP);
-    
-    Serial.println("2. WiFi.softAP()");
-    Serial.print("   SSID: ");
-    Serial.println(ssid);
-    Serial.print("   PASS: ");
-    Serial.println(password);
-    WiFi.softAP(ssid, password);
-    
-    delay(500);
-    
-    Serial.print("3. AP IP: ");
-    Serial.println(WiFi.softAPIP());
-    
-    Serial.print("4. AP MAC: ");
-    Serial.println(WiFi.softAPmacAddress());
-    
-    Serial.print("5. Status: ");
-    Serial.println(WiFi.status() == WL_AP_STARTED ? "AP STARTED!" : "FAILED");
-    
-    Serial.println("\n=== DONE - Search WiFi 'GMpro' ===");
+#ifdef SERIAL_DEBUG
+  Serial.begin(115200);
+#endif
+#ifdef LED
+  pinMode(LED, OUTPUT);
+#endif
+
+  WiFi.mode(WIFI_MODE_AP);
+  WiFi.softAP(AP_SSID, AP_PASS);
+
+  start_web_interface();
 }
 
 void loop() {
-    static uint32_t t = 0;
-    if (millis() - t > 3000) {
-        t = millis();
-        Serial.printf("Stations: %d\n", WiFi.softAPgetStationNum());
-    }
+  if (deauth_type == DEAUTH_TYPE_ALL) {
+    if (curr_channel > CHANNEL_MAX) curr_channel = 1;
+    esp_wifi_set_channel(curr_channel, WIFI_SECOND_CHAN_NONE);
+    curr_channel++;
+    delay(10);
+  } else {
+    web_interface_handle_client();
+  }
 }
