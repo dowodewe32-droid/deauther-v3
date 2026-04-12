@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-full:
+  build-esp32-only:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -16,55 +16,21 @@ jobs:
         with:
           python-version: '3.11'
           
-      - name: Clean disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
-          df -h /
+      - name: Clean disk
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
           
       - name: Install PlatformIO
-        run: |
-          pip install --no-cache-dir platformio
+        run: pip install --no-cache-dir platformio
           
-      - name: Build Full Firmware
+      - name: Build ESP32 Only Test
         run: |
-          pio run -e esp32wroom --verbose 2>&1 | tail -50
-          ls -la .pio/build/esp32wroom/firmware.bin
+          cd ESP32_ONLY_TEST
+          pio run 2>&1 | tail -20
+          ls -la .pio/build/esp32dev/
           
-      - name: Upload full firmware
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: firmware-full
-          path: .pio/build/esp32wroom/firmware.bin
-
-  build-minimal:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          
-      - name: Clean disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
-          
-      - name: Install PlatformIO
-        run: |
-          pip install --no-cache-dir platformio
-          
-      - name: Build Minimal Test
-        run: |
-          cd ESP32_MINIMAL_TEST
-          pio run --verbose 2>&1 | tail -30
-          ls -la .pio/build/esp32dev/firmware.bin
-          
-      - name: Upload minimal firmware
-        uses: actions/upload-artifact@v4
-        if: success()
-        with:
-          name: firmware-minimal
-          path: ESP32_MINIMAL_TEST/.pio/build/esp32dev/firmware.bin
+          name: firmware-esp32-only
+          path: ESP32_ONLY_TEST/.pio/build/esp32dev/firmware.bin
