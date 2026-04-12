@@ -24,31 +24,37 @@ jobs:
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /root/.platformio
           df -h
           
-      - name: Install PlatformIO
-        run: pip install --no-cache-dir platformio
-          
-      - name: Build firmware
+      - name: Clone TESA base and Build
         run: |
-          cd /home/runner/work/deauther-v3/deauther-v3
-          pio run -e esp32wroom 2>&1 | tee /tmp/build.log
+          cd /tmp
+          rm -rf ESP32-Deauther
+          git clone --depth 1 https://github.com/tesa-klebeband/ESP32-Deauther
           
-      - name: Check build result
+          cp -r /home/runner/work/deauther-v3/deauther-v3/data/web /tmp/ESP32-Deauther/data/
+          cp /home/runner/work/deauther-v3/deauther-v3/src/*.h /tmp/ESP32-Deauther/src/
+          cp /home/runner/work/deauther-v3/deauther-v3/src/*.cpp /tmp/ESP32-Deauther/src/
+          cp /home/runner/work/deauther-v3/deauther-v3/src/*.ino /tmp/ESP32-Deauther/src/
+          
+          pip install --no-cache-dir platformio
+          
+          cd /tmp/ESP32-Deauther
+          pio run -e esp32doit-devkit-v1 2>&1 | tee /tmp/build.log
+          
+      - name: Check result
         id: result
         run: |
-          if [ -f ".pio/build/esp32wroom/firmware.bin" ]; then
+          if [ -f "/tmp/ESP32-Deauther/.pio/build/esp32doit-devkit-v1/firmware.bin" ]; then
             echo "BUILD_SUCCESS=true" >> $GITHUB_OUTPUT
-            echo "Build berhasil!"
-            ls -la .pio/build/esp32wroom/*.bin
+            ls -la /tmp/ESP32-Deauther/.pio/build/esp32doit-devkit-v1/*.bin
           else
             echo "BUILD_SUCCESS=false" >> $GITHUB_OUTPUT
-            echo "Build GAGAL!"
-            cat /tmp/build.log | tail -50
+            cat /tmp/build.log | tail -30
           fi
           
       - name: Create flash image
         if: success()
         run: |
-          cd /home/runner/work/deauther-v3/deauther-v3
+          cd /tmp/ESP32-Deauther
           
           python3 << 'PYEOF'
           import os
@@ -56,11 +62,11 @@ jobs:
           PARTITIONS_ADDR = 0x8000
           APP_ADDR = 0x10000
           
-          with open('.pio/build/esp32wroom/bootloader.bin', 'rb') as f:
+          with open('.pio/build/esp32doit-devkit-v1/bootloader.bin', 'rb') as f:
               bootloader = f.read()
-          with open('.pio/build/esp32wroom/partitions.bin', 'rb') as f:
+          with open('.pio/build/esp32doit-devkit-v1/partitions.bin', 'rb') as f:
               partitions = f.read()
-          with open('.pio/build/esp32wroom/firmware.bin', 'rb') as f:
+          with open('.pio/build/esp32doit-devkit-v1/firmware.bin', 'rb') as f:
               firmware = f.read()
           
           with open('GMpro87dev_complete_flash.bin', 'wb') as f:
@@ -74,14 +80,12 @@ jobs:
           print(f"Complete flash: {os.path.getsize('GMpro87dev_complete_flash.bin')} bytes")
           PYEOF
           
-          ls -la GMpro87dev_complete_flash.bin
-          
-      - name: Upload to Release
+      - name: Upload
         if: success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cd /home/runner/work/deauther-v3/deauther-v3
+          cd /tmp/ESP32-Deauther
           
           RESP=$(curl -s -X POST \
             "https://uploads.github.com/repos/dowodewe32-droid/deauther-v3/releases/308016127/assets?name=GMpro87dev_v1.0_complete_flash.bin" \
