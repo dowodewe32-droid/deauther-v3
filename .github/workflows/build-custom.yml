@@ -1,0 +1,73 @@
+name: Build Custom Firmware
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+
+jobs:
+  build-esp32:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Clean disk
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          
+      - name: Install PlatformIO
+        run: pip install --no-cache-dir platformio
+          
+      - name: Build ESP32 firmware
+        run: |
+          cd /home/runner/work/esp8266_deauther/esp8266_deauther
+          pio run -e esp32wroom 2>&1
+          
+      - name: Create complete flash image
+        run: |
+          cd /home/runner/work/esp8266_deauther/esp8266_deauther
+          BUILD_DIR=.pio/build/esp32wroom
+          
+          python3 << 'EOF'
+          import struct
+          
+          BOOTLOADER_ADDR = 0x1000
+          PARTITIONS_ADDR = 0x8000
+          APP_ADDR = 0x10000
+          
+          with open('.pio/build/esp32wroom/bootloader.bin', 'rb') as f:
+              bootloader = f.read()
+          
+          with open('.pio/build/esp32wroom/partitions.bin', 'rb') as f:
+              partitions = f.read()
+          
+          with open('.pio/build/esp32wroom/firmware.bin', 'rb') as f:
+              firmware = f.read()
+          
+          with open('complete_flash_custom.bin', 'wb') as f:
+              f.write(b'\xff' * BOOTLOADER_ADDR)
+              f.write(bootloader)
+              f.write(b'\xff' * (PARTITIONS_ADDR - (BOOTLOADER_ADDR + len(bootloader))))
+              f.write(partitions)
+              f.write(b'\xff' * (APP_ADDR - (PARTITIONS_ADDR + len(partitions))))
+              f.write(firmware)
+          
+          print(f"Bootloader: {len(bootloader)} bytes")
+          print(f"Partitions: {len(partitions)} bytes")
+          print(f"Firmware: {len(firmware)} bytes")
+          print(f"Total: {len(bootloader) + len(partitions) + len(firmware)} bytes")
+          print(f"Complete image created: complete_flash_custom.bin")
+          EOF
+          
+          ls -la complete_flash_custom.bin
+          
+      - name: Upload complete flash
+        uses: actions/upload-artifact@v4
+        with:
+          name: custom-firmware-complete
+          path: /home/runner/work/esp8266_deauther/esp8266_deauther/complete_flash_custom.bin
