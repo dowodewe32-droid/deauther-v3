@@ -17,17 +17,8 @@ jobs:
         with:
           python-version: '3.11'
           
-      - name: Cache PlatformIO
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.platformio
-          key: ${{ runner.os }}-pio-v1-${{ hashFiles('**/platformio.ini') }}
-          restore-keys: |
-            ${{ runner.os }}-pio-
-            
       - name: Clean disk
-        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /home/runner/.cache
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
           
       - name: Clone TESA
         run: |
@@ -56,7 +47,7 @@ jobs:
       - name: Create flash
         run: |
           cd /tmp/ESP32-Deauther
-          python3 << 'PYEOF'
+          python3 -c "
 import os
 BOOTLOADER_ADDR = 0x1000
 PARTITIONS_ADDR = 0x8000
@@ -74,8 +65,8 @@ with open('GMpro87dev.bin', 'wb') as f:
     f.write(partitions)
     f.write(b'\xff' * (APP_ADDR - (PARTITIONS_ADDR + len(partitions))))
     f.write(firmware)
-print("Flash created: " + str(os.path.getsize('GMpro87dev.bin')) + " bytes")
-PYEOF
+print('Done: ' + str(os.path.getsize('GMpro87dev.bin')))
+"
           
       - name: Upload
         env:
