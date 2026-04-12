@@ -13,12 +13,15 @@ jobs:
         with:
           fetch-depth: 1
           
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v3
         with:
-          python-version: '3.11'
+          node-version: '18'
           
       - name: Clean disk
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          
+      - name: Install PlatformIO
+        run: npm install -g platformio
           
       - name: Clone TESA
         run: |
@@ -26,7 +29,7 @@ jobs:
           rm -rf ESP32-Deauther
           git clone --depth 1 https://github.com/tesa-klebeband/ESP32-Deauther
           
-      - name: Apply custom SSID
+      - name: Apply SSID
         run: |
           sed -i 's/#define AP_SSID "ESP32-Deauther"/#define AP_SSID "GMpro"/g' /tmp/ESP32-Deauther/include/definitions.h
           sed -i 's/#define AP_PASS "esp32wroom32"/#define AP_PASS "Sangkur87"/g' /tmp/ESP32-Deauther/include/definitions.h
@@ -35,9 +38,6 @@ jobs:
         run: |
           rm -rf /tmp/ESP32-Deauther/data
           cp -r /home/runner/work/deauther-v3/deauther-v3/data /tmp/ESP32-Deauther/
-          
-      - name: Install PlatformIO
-        run: pip install --no-cache-dir platformio
           
       - name: Build
         run: |
@@ -49,23 +49,14 @@ jobs:
           cd /tmp/ESP32-Deauther
           python3 -c "
 import os
-BOOTLOADER_ADDR = 0x1000
-PARTITIONS_ADDR = 0x8000
-APP_ADDR = 0x10000
-with open('.pio/build/esp32doit-devkit-v1/bootloader.bin', 'rb') as f:
-    bootloader = f.read()
-with open('.pio/build/esp32doit-devkit-v1/partitions.bin', 'rb') as f:
-    partitions = f.read()
-with open('.pio/build/esp32doit-devkit-v1/firmware.bin', 'rb') as f:
-    firmware = f.read()
-with open('GMpro87dev.bin', 'wb') as f:
-    f.write(b'\xff' * BOOTLOADER_ADDR)
-    f.write(bootloader)
-    f.write(b'\xff' * (PARTITIONS_ADDR - (BOOTLOADER_ADDR + len(bootloader))))
-    f.write(partitions)
-    f.write(b'\xff' * (APP_ADDR - (PARTITIONS_ADDR + len(partitions))))
-    f.write(firmware)
-print('Done: ' + str(os.path.getsize('GMpro87dev.bin')))
+B=0x1000;P=0x8000;A=0x10000
+with open('.pio/build/esp32doit-devkit-v1/bootloader.bin','rb') as f: bl=f.read()
+with open('.pio/build/esp32doit-devkit-v1/partitions.bin','rb') as f: pt=f.read()
+with open('.pio/build/esp32doit-devkit-v1/firmware.bin','rb') as f: fw=f.read()
+with open('GMpro87dev.bin','wb') as f:
+  f.write(b'\xff'*B);f.write(bl);f.write(b'\xff'*(P-(B+len(bl))));f.write(pt)
+  f.write(b'\xff'*(A-(P+len(pt))));f.write(fw)
+print('Done')
 "
           
       - name: Upload
