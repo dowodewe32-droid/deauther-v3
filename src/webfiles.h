@@ -48,7 +48,11 @@ const char LICENSE[] PROGMEM = {0x1f, 0x8b, 0x08, 0x08, 0xb5, 0x3c, 0x14, 0x60, 
 void copyWebFiles(bool force){
 #ifdef USE_PROGMEM_WEB_FILES
 if(settings::getWebSettings().use_spiffs){
+  #ifdef ESP32
+  if(!SPIFFS.exists("/web/index.html.gz") || force) progmemToSpiffs(indexhtml, sizeof(indexhtml), "/web/index.html.gz");
+  #else
   if(!LittleFS.exists("/web/index.html.gz") || force) progmemToSpiffs(indexhtml, sizeof(indexhtml), "/web/index.html.gz");
+  #endif
   if(!LittleFS.exists("/web/scan.html.gz") || force) progmemToSpiffs(scanhtml, sizeof(scanhtml), "/web/scan.html.gz");
   if(!LittleFS.exists("/web/info.html.gz") || force) progmemToSpiffs(infohtml, sizeof(infohtml), "/web/info.html.gz");
   if(!LittleFS.exists("/web/ssids.html.gz") || force) progmemToSpiffs(ssidshtml, sizeof(ssidshtml), "/web/ssids.html.gz");
@@ -81,7 +85,7 @@ if(settings::getWebSettings().use_spiffs){
   if(!LittleFS.exists("/web/lang/tlh.lang.gz") || force) progmemToSpiffs(tlhlang, sizeof(tlhlang), "/web/lang/tlh.lang.gz");
   if(!LittleFS.exists("/web/lang/es.lang.gz") || force) progmemToSpiffs(eslang, sizeof(eslang), "/web/lang/es.lang.gz");
   if(!LittleFS.exists("/web/lang/th.lang.gz") || force) progmemToSpiffs(thlang, sizeof(thlang), "/web/lang/th.lang.gz");
-    if(!LittleFS.exists("/web/LICENSE.gz") || force) progmemToSpiffs(LICENSE, sizeof(LICENSE), "/web/LICENSE.gz");
+  if(!LittleFS.exists("/web/LICENSE.gz") || force) progmemToSpiffs(LICENSE, sizeof(LICENSE), "/web/LICENSE.gz");
 }
 #endif
 }

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ESP32 Deauther</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a2e; color: #fff; min-height: 100vh; padding: 10px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 { text-align: center; color: #e94560; margin-bottom: 15px; font-size: 1.4rem; }
+        .card { background: #16213e; border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .card h2 { font-size: 1.1rem; color: #e94560; margin-bottom: 10px; border-bottom: 1px solid #e94560; padding-bottom: 8px; }
+        .btn { display: inline-block; padding: 12px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; text-align: center; width: 100%; margin: 5px 0; transition: all 0.3s; }
+        .btn-primary { background: #e94560; color: #fff; }
+        .btn-primary:active { background: #c73e54; transform: scale(0.98); }
+        .btn-danger { background: #dc3545; color: #fff; }
+        .btn-success { background: #28a745; color: #fff; }
+        .btn-warning { background: #ffc107; color: #000; }
+        .btn-info { background: #17a2b8; color: #fff; }
+        .btn-secondary { background: #6c757d; color: #fff; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .row { display: flex; gap: 8px; }
+        .row .btn { flex: 1; }
+        .info { font-size: 12px; color: #aaa; margin: 5px 0; }
+        .status { padding: 8px; border-radius: 6px; margin: 8px 0; font-size: 13px; }
+        .status.on { background: #28a745; }
+        .status.off { background: #dc3545; }
+        .scan-list { max-height: 300px; overflow-y: auto; }
+        .scan-item { padding: 10px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .scan-item:last-child { border-bottom: none; }
+        .scan-info { flex: 1; }
+        .scan-name { font-weight: 600; font-size: 14px; word-break: break-all; }
+        .scan-name.hidden { color: #ffc107; font-style: italic; }
+        .scan-meta { font-size: 11px; color: #888; margin-top: 3px; }
+        .scan-chk { width: 20px; height: 20px; }
+        .attack-btn { background: #e94560; }
+        .attack-btn.active { background: #28a745; }
+        .hidden-badge { background: #ffc107; color: #000; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 5px; }
+        .nav { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 15px; }
+        .nav-btn { flex: 1 1 45%; padding: 10px; background: #16213e; border: 1px solid #e94560; border-radius: 8px; color: #fff; text-align: center; font-size: 12px; cursor: pointer; }
+        .nav-btn.active { background: #e94560; }
+        .section { display: none; }
+        .section.active { display: block; }
+        input, select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #0f3460; color: #fff; font-size: 14px; margin: 5px 0; }
+        .log { background: #0f3460; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 11px; max-height: 150px; overflow-y: auto; white-space: pre-wrap; color: #0f0; }
+        #result { margin-top: 10px; padding: 10px; border-radius: 6px; display: none; }
+        #result.show { display: block; }
+        #result.success { background: #28a745; }
+        #result.error { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ESP32 Deauther Pro</h1>
+        
+        <div class="nav">
+            <div class="nav-btn active" onclick="showSection('scan')">Scan</div>
+            <div class="nav-btn" onclick="showSection('attack')">Attack</div>
+            <div class="nav-btn" onclick="showSection('blespam')">BLE Spam</div>
+            <div class="nav-btn" onclick="showSection('beacon')">Beacon</div>
+            <div class="nav-btn" onclick="showSection('settings')">Settings</div>
+            <div class="nav-btn" onclick="showSection('info')">Info</div>
+        </div>
+        
+        <!-- SCAN SECTION -->
+        <div id="scan" class="section active">
+            <div class="card">
+                <h2>WiFi Scanner</h2>
+                <div class="row">
+                    <button class="btn btn-primary" onclick="startScan()">Scan</button>
+                    <button class="btn btn-secondary" onclick="stopScan()">Stop</button>
+                </div>
+                <div class="info" id="scanStatus">Ready to scan</div>
+            </div>
+            
+            <div class="card">
+                <h2>Networks (<span id="apCount">0</span>)</h2>
+                <button class="btn btn-warning" onclick="selectAll()">Select All</button>
+                <button class="btn btn-secondary" onclick="deselectAll()">Deselect All</button>
+                <div class="scan-list" id="scanList">
+                    <div class="info">No networks found</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ATTACK SECTION -->
+        <div id="attack" class="section">
+            <div class="card">
+                <h2>Attacks</h2>
+                <button class="btn btn-danger attack-btn" id="deauthBtn" onclick="startDeauth()">Deauth Attack</button>
+                <button class="btn btn-danger attack-btn" id="trueDeauthBtn" onclick="startTrueDeauth()">TRUE DEAUTH (Kill All WiFi)</button>
+                <div class="info">Channel hopping 1-13, broadcasts deauth to ALL</div>
+            </div>
+            
+            <div class="card">
+                <h2>Evil Twin</h2>
+                <input type="text" id="etSSID" placeholder="SSID (e.g. FREE_WiFi)">
+                <select id="etChannel">
+                    <option value="1">Channel 1</option>
+                    <option value="6">Channel 6</option>
+                    <option value="11">Channel 11</option>
+                </select>
+                <button class="btn btn-warning" onclick="startEvilTwin()">Start Evil Twin</button>
+            </div>
+            
+            <div class="card">
+                <h2>Status</h2>
+                <div class="log" id="attackLog">No attacks running</div>
+            </div>
+        </div>
+        
+        <!-- BLE SPAM SECTION -->
+        <div id="blespam" class="section">
+            <div class="card">
+                <h2>BLE Scanner</h2>
+                <button class="btn btn-primary" onclick="startBLEScan()">Scan BLE</button>
+                <div id="bleList" class="scan-list"></div>
+            </div>
+            
+            <div class="card">
+                <h2>BLE Spam</h2>
+                <button class="btn btn-danger" id="bleSpamBtn" onclick="toggleBleSpam()">Start BLE Spam</button>
+                <div class="info">Spams fake BLE devices (AirPods, Galaxy Buds, etc)</div>
+            </div>
+        </div>
+        
+        <!-- BEACON SPAM SECTION -->
+        <div id="beacon" class="section">
+            <div class="card">
+                <h2>Beacon Spam</h2>
+                <input type="text" id="beaconSSIDs" placeholder="SSIDs (comma separated)" value="Free WiFi,Guest WiFi,PUBLIC WiFi">
+                <input type="number" id="beaconCount" placeholder="Count" value="20">
+                <select id="beaconChannel">
+                    <option value="1">Channel 1</option>
+                    <option value="6">Channel 6</option>
+                    <option value="11">Channel 11</option>
+                </select>
+                <button class="btn btn-danger" onclick="startBeaconSpam()">Start Beacon Spam</button>
+                <button class="btn btn-secondary" onclick="stopAttack()">Stop</button>
+            </div>
+            
+            <div class="card">
+                <h2>Preset SSIDs</h2>
+                <button class="btn btn-info" onclick="setBeaconPreset('apple')">Apple Devices</button>
+                <button class="btn btn-info" onclick="setBeaconPreset('android')">Android Devices</button>
+                <button class="btn btn-info" onclick="setBeaconPreset('random')">Random</button>
+            </div>
+        </div>
+        
+        <!-- SETTINGS SECTION -->
+        <div id="settings" class="section">
+            <div class="card">
+                <h2>AP Settings</h2>
+                <input type="text" id="apSSID" placeholder="SSID" value="GMpro">
+                <input type="password" id="apPASS" placeholder="Password" value="Sangkur87">
+                <button class="btn btn-success" onclick="saveSettings()">Save & Reboot</button>
+            </div>
+            
+            <div class="card">
+                <h2>Password Validator</h2>
+                <input type="text" id="pwdSSID" placeholder="Target SSID">
+                <input type="password" id="pwdPASS" placeholder="Password to test">
+                <button class="btn btn-primary" onclick="testPassword()">Test Password</button>
+                <div id="pwdResult"></div>
+            </div>
+        </div>
+        
+        <!-- INFO SECTION -->
+        <div id="info" class="section">
+            <div class="card">
+                <h2>System Info</h2>
+                <div id="sysInfo">Loading...</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="result" class="status"></div>
+    
+    <script>
+        let selectedAPs = new Set();
+        let scanInterval;
+        
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function showResult(msg, type) {
+            const el = document.getElementById('result');
+            el.textContent = msg;
+            el.className = 'status show ' + type;
+            setTimeout(() => el.classList.remove('show'), 3000);
+        }
+        
+        async function startScan() {
+            document.getElementById('scanStatus').textContent = 'Scanning...';
+            document.getElementById('scanList').innerHTML = '<div class="info">Scanning...</div>';
+            
+            try {
+                const res = await fetch('/scan.json');
+                const data = await res.json();
+                displayAPs(data);
+                document.getElementById('scanStatus').textContent = `Found ${data.length} networks`;
+            } catch(e) {
+                showResult('Scan error: ' + e, 'error');
+            }
+        }
+        
+        function displayAPs(aps) {
+            const list = document.getElementById('scanList');
+            const hiddenList = document.getElementById('hiddenList');
+            document.getElementById('apCount').textContent = aps.length;
+            
+            if (aps.length === 0) {
+                list.innerHTML = '<div class="info">No networks found</div>';
+                return;
+            }
+            
+            list.innerHTML = aps.map((ap, i) => {
+                const isHidden = ap.ssid === '' || ap.ssid === '(hidden)';
+                const ssid = isHidden ? '<em>(Hidden Network)</em>' : ap.ssid;
+                const isSelected = selectedAPs.has(i);
+                return `
+                    <div class="scan-item">
+                        <div class="scan-info">
+                            <div class="scan-name ${isHidden ? 'hidden' : ''}">${ssid}${isHidden ? '<span class="hidden-badge">HIDDEN</span>' : ''}</div>
+                            <div class="scan-meta">CH:${ap.ch} | RSSI:${ap.rssi} | ${ap.enc}</div>
+                        </div>
+                        <input type="checkbox" class="scan-chk" ${isSelected ? 'checked' : ''} onchange="toggleAP(${i})">
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function toggleAP(id) {
+            if (selectedAPs.has(id)) selectedAPs.delete(id);
+            else selectedAPs.add(id);
+        }
+        
+        function selectAll() {
+            fetch('/selectAll')
+                .then(() => startScan())
+                .catch(e => showResult(e, 'error'));
+        }
+        
+        function deselectAll() {
+            selectedAPs.clear();
+            fetch('/deselectAll')
+                .then(() => startScan())
+                .catch(e => showResult(e, 'error'));
+        }
+        
+        async function startDeauth() {
+            try {
+                await fetch('/attack.json?start=deauth');
+                document.getElementById('attackLog').textContent = 'Deauth attack started';
+                showResult('Deauth attack started', 'success');
+            } catch(e) { showResult(e, 'error'); }
+        }
+        
+        async function startTrueDeauth() {
+            try {
+                await fetch('/truedeauth_start');
+                document.getElementById('attackLog').textContent = 'TRUE DEAUTH - KILLING ALL WIFI!';
+                showResult('TRUE DEAUTH ACTIVATED!', 'error');
+            } catch(e) { showResult(e, 'error'); }
+        }
+        
+        async function startEvilTwin() {
+            const ssid = document.getElementById('etSSID').value;
+            const ch = document.getElementById('etChannel').value;
+            try {
+                await fetch(`/etwin_start?ssid=${encodeURIComponent(ssid)}&ch=${ch}`);
+                showResult('Evil Twin started: ' + ssid, 'success');
+            } catch(e) { showResult(e, 'error'); }
+        }
+        
+        async function startBeaconSpam() {
+            const ssids = document.getElementById('beaconSSIDs').value;
+            const count = document.getElementById('beaconCount').value;
+            const ch = document.getElementById('beaconChannel').value;
+            try {
+                await fetch(`/beacon_start?ssids=${encodeURIComponent(ssids)}&count=${count}&ch=${ch}`);
+                showResult('Beacon spam started', 'success');
+            } catch(e) { showResult(e, 'error'); }
+        }
+        
+        async function toggleBleSpam() {
+            const btn = document.getElementById('bleSpamBtn');
+            try {
+                const res = await fetch('/blespam_status');
+                const data = await res.json();
+                if (data.running) {
+                    await fetch('/blespam_stop');
+                    btn.textContent = 'Start BLE Spam';
+                    btn.classList.remove('active');
+                } else {
+                    await fetch('/blespam_start');
+                    btn.textContent = 'Stop BLE Spam';
+                    btn.classList.add('active');
+                }
+            } catch(e) { showResult(e, 'error'); }
+        }
+        
+        async function startBLEScan() {
+            try {
+                const res = await fetch('/blescan.json');
+                const data = await res.json();
+                document.getElementById('bleList').innerHTML = data.length ? 
+                    data.map(d => `<div class="scan-item"><div class="scan-info"><div class="scan-name">${d.name}</div><div class="scan-meta">${d.addr} | RSSI:${d.rssi}</div></div></div>`).join('') :
+                    '<div class="info">No BLE devices found</div>';
+            } catch(e) { showResult(e, 'error'); }
+        }
+        
+        async function testPassword() {
+            const ssid = document.getElementById('pwdSSID').value;
+            const pwd = document.getElementById('pwdPASS').value;
+            try {
+                const res = await fetch(`/logpwd?ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(pwd)}`);
+                const text = await res.text();
+                document.getElementById('pwdResult').innerHTML = `<div class="status ${text.includes('SUCCESS') ? 'on' : 'off'}">${text}</div>`;
+            } catch(e) { document.getElementById('pwdResult').innerHTML = '<div class="status off">Error</div>'; }
+        }
+        
+        async function saveSettings() {
+            const ssid = document.getElementById('apSSID').value;
+            const pass = document.getElementById('apPASS').value;
+            try {
+                await fetch(`/settings.json?ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(pass)}`);
+                showResult('Settings saved! Rebooting...', 'success');
+                setTimeout(() => location.reload(), 2000);
+            } catch(e) { showResult(e, 'error'); }
+        }
+        
+        function setBeaconPreset(preset) {
+            const presets = {
+                apple: 'iPhone,MacBook Pro,Apple TV,HomePod,AirPods',
+                android: 'Galaxy S24,Pixel 8,Xiaomi 14,OnePlus 12,Galaxy Watch',
+                random: 'FREE_WiFi,Guest_Network,Starbucks_WiFi,Airport_Free,McDonalds_Free'
+            };
+            document.getElementById('beaconSSIDs').value = presets[preset];
+        }
+        
+        async function loadInfo() {
+            try {
+                const res = await fetch('/info.json');
+                const data = await res.json();
+                document.getElementById('sysInfo').innerHTML = `
+                    <p><strong>Version:</strong> ${data.version}</p>
+                    <p><strong>Heap:</strong> ${data.freeheap} bytes</p>
+                    <p><strong>Uptime:</strong> ${Math.floor(data.uptime/1000)}s</p>
+                `;
+            } catch(e) {}
+        }
+        
+        // Auto refresh scan every 5 seconds
+        setInterval(() => {
+            if (document.getElementById('scan').classList.contains('active')) {
+                startScan();
+            }
+        }, 5000);
+        
+        // Load info on page load
+        loadInfo();
+    </script>
+</body>
+</html>

@@ -81,13 +81,20 @@ void setup() {
     currentTime = millis();
 
     Serial.println("[3] Settings...");
-#ifndef RESET_SETTINGS
-    settings::load();
-    // Force reset web settings to ensure AP works
+    // Force reset to default SSID/Password
     settings::reset();
-#else
-    settings::reset();
-#endif
+    // Set explicitly in case reset didn't work
+    ap_settings_t apSet = settings::getAccessPointSettings();
+    strncpy(apSet.ssid, "GMpro", 32);
+    strncpy(apSet.password, "Sangkur87", 64);
+    apSet.hidden = false;
+    settings::setAccessPointSettings(apSet);
+    
+    // Enable SPIFFS mode for web files
+    web_settings_t webSet = settings::getWebSettings();
+    webSet.use_spiffs = true;
+    settings::setWebSettings(webSet);
+    
     settings::save();
     Serial.print("[3] SSID: ");
     Serial.println(settings::getAccessPointSettings().ssid);

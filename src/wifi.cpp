@@ -372,11 +372,21 @@ namespace wifi {
         // ================================================================
         // paste here the output of the webConverter.py
         if (!settings::getWebSettings().use_spiffs) {
+            // Check for custom index.html in SPIFFS first
             server.on("/", HTTP_GET, []() {
-                sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);
+                // Always try SPIFFS first for custom web UI
+                if (FILE_SYSTEM.exists("/web/index.html")) {
+                    handleFileRead("/web/index.html");
+                } else {
+                    sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);
+                }
             });
             server.on("/index.html", HTTP_GET, []() {
-                sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);
+                if (FILE_SYSTEM.exists("/web/index.html")) {
+                    handleFileRead("/web/index.html");
+                } else {
+                    sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);
+                }
             });
             server.on("/scan.html", HTTP_GET, []() {
                 sendProgmem(scanhtml, sizeof(scanhtml), W_HTML);
@@ -515,6 +525,91 @@ namespace wifi {
 
         server.on("/attack.json", HTTP_GET, []() {
             server.send(200, str(W_JSON), attack.getStatusJSON());
+        });
+
+        // Scan JSON - returns scanned APs
+        server.on("/scan.json", HTTP_GET, []() {
+            String json = "[";
+            for (int i = 0; i < accesspoints.count(); i++) {
+                if (i > 0) json += ",";
+                String ssid = accesspoints.getSSID(i);
+                bool hidden = accesspoints.getHidden(i);
+                json += "{";
+                json += "\"id\":" + String(i) + ",";
+                json += "\"ssid\":\"" + (hidden ? "(hidden)" : ssid) + "\",";
+                json += "\"ch\":" + String(accesspoints.getCh(i)) + ",";
+                json += "\"rssi\":" + String(accesspoints.getRSSI(i)) + ",";
+                json += "\"enc\":\"" + accesspoints.getEncStr(i) + "\",";
+                json += "\"mac\":\"" + accesspoints.getMacStr(i) + "\",";
+                json += "\"hidden\":" + String(hidden ? "true" : "false") + ",";
+                json += "\"selected\":" + String(accesspoints.getSelected(i) ? "true" : "false");
+                json += "}";
+            }
+            json += "]";
+            server.send(200, str(W_JSON), json);
+        });
+
+        // Select all APs
+        server.on("/selectAll", HTTP_GET, []() {
+            accesspoints.selectAll();
+            server.send(200, str(W_TXT), "All APs selected");
+        });
+
+        // Deselect all APs
+        server.on("/deselectAll", HTTP_GET, []() {
+            accesspoints.deselectAll();
+            server.send(200, str(W_TXT), "All APs deselected");
+        });
+
+        // Info JSON
+        server.on("/info.json", HTTP_GET, []() {
+            String json = "{";
+            json += "\"version\":\"" + String(DEAUTHER_VERSION) + "\",";
+            json += "\"freeheap\":" + String(ESP.getFreeHeap()) + ",";
+            json += "\"uptime\":" + String(millis());
+            json += "}";
+            server.send(200, str(W_JSON), json);
+        });
+
+        // Start deauth attack
+        server.on("/deauth_start", HTTP_GET, []() {
+            attack.start(true, true, false, false, true, 0);
+            server.send(200, str(W_TXT), "Deauth attack started");
+        });
+
+        // Beacon spam start
+        server.on("/beacon_start", HTTP_GET, []() {
+            String ssids = server.arg("ssids");
+            String count = server.arg("count");
+            String ch = server.arg("ch");
+            int beaconCount = count.length() > 0 ? count.toInt() : 20;
+            uint8_t channel = ch.length() > 0 ? ch.toInt() : 1;
+            attack.startBeaconSpam(beaconCount, channel);
+            server.send(200, str(W_TXT), "Beacon spam started with " + String(beaconCount) + " SSIDs");
+        });
+
+        // Evil twin start
+        server.on("/etwin_start", HTTP_GET, []() {
+            String ssid = server.arg("ssid");
+            String ch = server.arg("ch");
+            uint8_t channel = ch.length() > 0 ? ch.toInt() : 1;
+            uint8_t fakeMac[6] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+            attack.startEvilTwin(ssid.c_str(), channel, true, fakeMac);
+            server.send(200, str(W_TXT), "Evil Twin started: " + ssid);
+        });
+
+        // Stop all attacks
+        server.on("/stop", HTTP_GET, []() {
+            attack.stop();
+            server.send(200, str(W_TXT), "All attacks stopped");
+        });
+
+        // Password validation
+        server.on("/logpwd", HTTP_GET, []() {
+            String ssid = server.arg("ssid");
+            String password = server.arg("password");
+            attack.validatePassword(ssid.c_str(), password.c_str());
+            server.send(200, str(W_TXT), "Testing password for " + ssid);
         });
 
         #ifdef ESP32
