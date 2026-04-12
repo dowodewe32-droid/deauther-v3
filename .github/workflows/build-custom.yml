@@ -8,36 +8,44 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
           
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           
-      - name: Clean
+      - name: Clean disk
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
           
-      - name: Clone
+      - name: Clone TESA
         run: |
           cd /tmp
           rm -rf ESP32-Deauther
           git clone --depth 1 https://github.com/tesa-klebeband/ESP32-Deauther
           
       - name: Copy web files
-        run: cp -r /home/runner/work/deauther-v3/deauther-v3/data/web /tmp/ESP32-Deauther/data/
+        run: |
+          cp -r /home/runner/work/deauther-v3/deauther-v3/data/web /tmp/ESP32-Deauther/data/
+          
+      - name: Install PlatformIO
+        run: pip install --no-cache-dir platformio
           
       - name: Build
         run: |
-          pip install --no-cache-dir platformio
           cd /tmp/ESP32-Deauther
-          pio run -e esp32doit-devkit-v1
+          pio run -e esp32doit-devkit-v1 2>&1 | tail -30
           
-      - name: Create flash
-        if: success()
+      - name: Check build
+        run: |
+          cd /tmp/ESP32-Deauther
+          ls -la .pio/build/esp32doit-devkit-v1/*.bin
+          
+      - name: Create flash image
         run: |
           cd /tmp/ESP32-Deauther
           python3 << 'PYEOF'
@@ -58,16 +66,16 @@ with open('GMpro87dev.bin', 'wb') as f:
     f.write(partitions)
     f.write(b'\xff' * (APP_ADDR - (PARTITIONS_ADDR + len(partitions))))
     f.write(firmware)
-print("Done")
+print("Flash created: " + str(os.path.getsize('GMpro87dev.bin')) + " bytes")
 PYEOF
           
-      - name: Upload
-        if: success()
+      - name: Upload to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd /tmp/ESP32-Deauther
-          curl -s -X POST "https://uploads.github.com/repos/dowodewe32-droid/deauther-v3/releases/308016127/assets?name=GMpro87dev_v1.0.bin" \
+          RESP=$(curl -s -X POST "https://uploads.github.com/repos/dowodewe32-droid/deauther-v3/releases/308016127/assets?name=GMpro87dev_v1.0.bin" \
             -H "Authorization: token $GH_TOKEN" \
             -H "Content-Type: application/octet-stream" \
-            --data-binary @GMpro87dev.bin | python3 -c "import json,sys; print(json.load(sys.stdin).get('browser_download_url','ERROR'))"
+            --data-binary @GMpro87dev.bin)
+          echo "$RESP" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('browser_download_url','ERROR: '+d.get('message','')))"
