@@ -26,9 +26,18 @@ jobs:
       - name: Build ESP32 firmware
         run: |
           cd /home/runner/work/esp8266_deauther/esp8266_deauther
+          ls -la
           pio run -e esp32wroom 2>&1
           
+      - name: List build files
+        if: always()
+        run: |
+          cd /home/runner/work/esp8266_deauther/esp8266_deauther
+          ls -la .pio/build/esp32wroom/ 2>/dev/null || echo "Build directory not found"
+          ls -la .pio/build/esp32wroom/*.bin 2>/dev/null || echo "No bin files"
+          
       - name: Create complete flash image
+        if: success()
         run: |
           cd /home/runner/work/esp8266_deauther/esp8266_deauther
           BUILD_DIR=.pio/build/esp32wroom
@@ -67,6 +76,7 @@ jobs:
           ls -la complete_flash_custom.bin
           
       - name: Upload complete flash
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: custom-firmware-complete
