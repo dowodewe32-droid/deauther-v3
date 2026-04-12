@@ -11,7 +11,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
+        with:
+          fetch-depth: 0
+          
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -20,31 +22,50 @@ jobs:
       - name: Clean disk
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
           
+      - name: Clone working ESP32-Deauther base
+        run: |
+          cd /tmp
+          rm -rf ESP32-Deauther
+          git clone --depth 1 https://github.com/tesa-klebeband/ESP32-Deauther
+          
       - name: Install PlatformIO
         run: pip install --no-cache-dir platformio
           
+      - name: Copy custom web files
+        run: |
+          cp -r /home/runner/work/deauther-v3/deauther-v3/data/web/* /tmp/ESP32-Deauther/data/web/
+          
       - name: Build ESP32 firmware
         run: |
-          cd /home/runner/work/deauther-v3/deauther-v3
-          pio run -e esp32wroom 2>&1
+          cd /tmp/ESP32-Deauther
+          pio run -e esp32doit-devkit-v1 2>&1 | tail -30
+          
+      - name: List build files
+        run: |
+          cd /tmp/ESP32-Deauther
+          ls -la .pio/build/esp32doit-devkit-v1/*.bin 2>/dev/null || echo "No bin files found"
           
       - name: Create complete flash image
         if: success()
         run: |
-          cd /home/runner/work/deauther-v3/deauther-v3
+          cd /tmp/ESP32-Deauther
           
           python3 << 'EOF'
+          import os
+          
+          build_dir = ".pio/build/esp32doit-devkit-v1"
+          
           BOOTLOADER_ADDR = 0x1000
           PARTITIONS_ADDR = 0x8000
           APP_ADDR = 0x10000
           
-          with open('.pio/build/esp32wroom/bootloader.bin', 'rb') as f:
+          with open(f'{build_dir}/bootloader.bin', 'rb') as f:
               bootloader = f.read()
           
-          with open('.pio/build/esp32wroom/partitions.bin', 'rb') as f:
+          with open(f'{build_dir}/partitions.bin', 'rb') as f:
               partitions = f.read()
           
-          with open('.pio/build/esp32wroom/firmware.bin', 'rb') as f:
+          with open(f'{build_dir}/firmware.bin', 'rb') as f:
               firmware = f.read()
           
           with open('complete_flash_custom.bin', 'wb') as f:
@@ -58,14 +79,16 @@ jobs:
           print(f"Complete image: {len(bootloader) + len(partitions) + len(firmware)} bytes")
           EOF
           
+          ls -la complete_flash_custom.bin
+          
       - name: Upload to Release
         if: success()
         run: |
-          cd /home/runner/work/deauther-v3/deauther-v3
+          cd /tmp/ESP32-Deauther
           
-          RESPONSE=$(curl -s -X POST "https://api.github.com/repos/${{ github.repository }}/releases/307981417/assets?name=complete_flash_custom_v2.bin" \
+          RESPONSE=$(curl -s -X POST "https://api.github.com/repos/${{ github.repository }}/releases/307981417/assets?name=complete_flash_custom_v3.bin" \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Content-Type: application/octet-stream" \
             --data-binary @complete_flash_custom.bin)
           
-          echo "$RESPONSE" | grep -o '"browser_download_url":"[^"]*"'
+          echo "$RESPONSE" | grep -o '"browser_download_url":"[^"]*"' || echo "Upload response: $RESPONSE"
