@@ -612,11 +612,11 @@
 #endif // ifndef WEB_URL
 
 // ======== CONSTANTS ========== //
-// Do not change these values unless you know what you're doing!
-#define DEAUTHER_VERSION "2.6.1"
-#define DEAUTHER_VERSION_MAJOR 2
-#define DEAUTHER_VERSION_MINOR 6
-#define DEAUTHER_VERSION_REVISION 1
+// GMpro87dev bun TESA
+#define DEAUTHER_VERSION "GMpro87dev bun TESA v1.0"
+#define DEAUTHER_VERSION_MAJOR 1
+#define DEAUTHER_VERSION_MINOR 0
+#define DEAUTHER_VERSION_REVISION 0
 
 #define EEPROM_SIZE 4095
 #define BOOT_COUNTER_ADDR 1

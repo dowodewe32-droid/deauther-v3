@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ESP32 Deauther Pro</title>
+    <title>GMpro87dev bun TESA</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -307,7 +307,7 @@
         }
         
         .network-check.selected::after {
-            content: '✓';
+            content: 'OK';
             color: white;
             font-size: 14px;
             font-weight: bold;
@@ -527,7 +527,7 @@
         
         <!-- ATTACK STATUS -->
         <div class="attack-status" id="attackCard">
-            <div class="attack-icon">🎯</div>
+            <div class="attack-icon">[TARGET]</div>
             <div class="attack-title">No Attack Running</div>
             <div class="attack-subtitle">Select targets and start an attack</div>
         </div>
@@ -536,17 +536,17 @@
         <section id="section-scan" class="section active">
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title"><span>📡</span> WiFi Scanner</div>
+                    <div class="card-title"><span>[WIFI]</span> WiFi Scanner</div>
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-primary" onclick="startScan()">🔍 Scan</button>
-                    <button class="btn btn-outline" onclick="stopScan()">⏹ Stop</button>
+                    <button class="btn btn-primary" onclick="startScan()">[SEARCH] Scan</button>
+                    <button class="btn btn-outline" onclick="stopScan()">[STOP] Stop</button>
                 </div>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title"><span>📶</span> Networks (<span id="listCount">0</span>)</div>
+                    <div class="card-title"><span>[NET]</span> Networks (<span id="listCount">0</span>)</div>
                     <button class="preset-btn" onclick="selectAll()">Select All</button>
                 </div>
                 <div class="network-list" id="networkList">
@@ -561,28 +561,28 @@
         <section id="section-attack" class="section">
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title"><span>⚡</span> Attack Options</div>
+                    <div class="card-title"><span>[PWR]</span> Attack Options</div>
                 </div>
                 <button class="btn btn-danger" id="deauthBtn" onclick="startDeauth()">
-                    🚫 Start Deauth Attack
+                    [X] Start Deauth Attack
                 </button>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title"><span>💀</span> TRUE DEAUTH</div>
+                    <div class="card-title"><span>[KILL]</span> TRUE DEAUTH</div>
                 </div>
                 <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 12px;">
                     Kills ALL WiFi on channels 1-13. Broadcasts deauth to every device.
                 </p>
                 <button class="btn btn-danger" id="trueDeauthBtn" onclick="startTrueDeauth()">
-                    💀 KILL ALL WIFI
+                    [KILL] KILL ALL WIFI
                 </button>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title"><span>📤</span> Beacon Spam</div>
+                    <div class="card-title"><span>[SEND]</span> Beacon Spam</div>
                 </div>
                 <div class="input-group">
                     <input type="text" class="input" id="beaconSSIDs" placeholder="SSIDs (comma separated)" value="Free WiFi,Guest,PUBLIC">
@@ -598,13 +598,13 @@
                     </select>
                 </div>
                 <button class="btn btn-primary" onclick="startBeaconSpam()">
-                    📡 Start Beacon Spam
+                    [WIFI] Start Beacon Spam
                 </button>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title"><span>🕵️</span> Evil Twin</div>
+                    <div class="card-title"><span>[HACK]</span> Evil Twin</div>
                 </div>
                 <div class="input-group">
                     <input type="text" class="input" id="etSSID" placeholder="Fake SSID (e.g. FREE_WiFi)">
@@ -617,13 +617,13 @@
                     </select>
                 </div>
                 <button class="btn btn-primary" onclick="startEvilTwin()">
-                    🎭 Start Evil Twin
+                    [MASK] Start Evil Twin
                 </button>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title"><span>📋</span> Attack Log</div>
+                    <div class="card-title"><span>[LIST]</span> Attack Log</div>
                 </div>
                 <div class="log-area" id="attackLog">Attack logs will appear here...</div>
             </div>
@@ -633,21 +633,21 @@
         <section id="section-ble" class="section">
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title"><span>📱</span> BLE Scanner</div>
+                    <div class="card-title"><span>[PHONE]</span> BLE Scanner</div>
                 </div>
-                <button class="btn btn-primary" onclick="startBLEScan()">🔍 Scan BLE</button>
+                <button class="btn btn-primary" onclick="startBLEScan()">[SEARCH] Scan BLE</button>
                 <div id="bleList" style="margin-top: 12px;"></div>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title"><span>📻</span> BLE Spam</div>
+                    <div class="card-title"><span>[RADIO]</span> BLE Spam</div>
                 </div>
                 <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 12px;">
                     Spams fake BLE devices: AirPods, Galaxy Buds, Apple Watch, etc.
                 </p>
                 <button class="btn btn-danger" id="bleSpamBtn" onclick="toggleBleSpam()">
-                    📡 Start BLE Spam
+                    [WIFI] Start BLE Spam
                 </button>
             </div>
         </section>
@@ -656,7 +656,7 @@
         <section id="section-settings" class="section">
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title"><span>⚙️</span> AP Settings</div>
+                    <div class="card-title"><span>[SET]</span> AP Settings</div>
                 </div>
                 <div class="input-group">
                     <label class="input-label">SSID</label>
@@ -666,12 +666,12 @@
                     <label class="input-label">Password</label>
                     <input type="password" class="input" id="apPASS" value="Sangkur87">
                 </div>
-                <button class="btn btn-success" onclick="saveSettings()">💾 Save & Reboot</button>
+                <button class="btn btn-success" onclick="saveSettings()">[SAVE] Save & Reboot</button>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title"><span>🔑</span> Password Validator</div>
+                    <div class="card-title"><span>[KEY]</span> Password Validator</div>
                 </div>
                 <div class="input-group">
                     <input type="text" class="input" id="pwdSSID" placeholder="Target SSID">
@@ -679,15 +679,15 @@
                 <div class="input-group">
                     <input type="password" class="input" id="pwdPASS" placeholder="Password to test">
                 </div>
-                <button class="btn btn-primary" onclick="testPassword()">✓ Test Password</button>
+                <button class="btn btn-primary" onclick="testPassword()">OK Test Password</button>
                 <div id="pwdResult" style="margin-top: 12px;"></div>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title"><span>🔄</span> Stop All</div>
+                    <div class="card-title"><span>[REFRESH]</span> Stop All</div>
                 </div>
-                <button class="btn btn-danger" onclick="stopAll()">⏹ Stop All Attacks</button>
+                <button class="btn btn-danger" onclick="stopAll()">[STOP] Stop All Attacks</button>
             </div>
         </section>
         
@@ -705,7 +705,7 @@
             </div>
             <div class="card" style="margin-top: 16px;">
                 <div class="card-header">
-                    <div class="card-title"><span>📌</span> System Info</div>
+                    <div class="card-title"><span>[PIN]</span> System Info</div>
                 </div>
                 <div style="font-size: 13px; color: var(--text-dim);">
                     <p><strong>Version:</strong> <span id="version">2.6.1</span></p>
@@ -718,19 +718,19 @@
     <!-- NAVIGATION -->
     <nav class="nav">
         <div class="nav-item active" onclick="showSection('scan')">
-            <span>📡</span>
+            <span>[WIFI]</span>
             <span>Scan</span>
         </div>
         <div class="nav-item" onclick="showSection('attack')">
-            <span>⚡</span>
+            <span>[PWR]</span>
             <span>Attack</span>
         </div>
         <div class="nav-item" onclick="showSection('ble')">
-            <span>📱</span>
+            <span>[PHONE]</span>
             <span>BLE</span>
         </div>
         <div class="nav-item" onclick="showSection('settings')">
-            <span>⚙️</span>
+            <span>[SET]</span>
             <span>Settings</span>
         </div>
     </nav>
@@ -783,7 +783,7 @@
                 const isHidden = ap.hidden || ap.ssid === '(hidden)' || ap.ssid === '';
                 const name = isHidden ? '(Hidden Network)' : ap.ssid;
                 const selected = selectedAPs.has(i);
-                const icon = isHidden ? '👁️' : (ap.enc.includes('WPA') ? '🔒' : '📶');
+                const icon = isHidden ? '[EYE]' : (ap.enc.includes('WPA') ? '[LOCK]' : '[NET]');
                 
                 return `
                     <div class="network-item" onclick="toggleNetwork(${i})">
@@ -834,7 +834,7 @@
                 await fetch('/truedeauth_start');
                 updateAttackStatus(true, 'TRUE DEAUTH ACTIVE');
                 document.getElementById('attackCard').classList.add('active');
-                document.getElementById('attackLog').textContent = '💀 KILLING ALL WIFI!\nChannel hopping 1-13\nBroadcasting deauth to ALL devices...';
+                document.getElementById('attackLog').textContent = '[KILL] KILLING ALL WIFI!\nChannel hopping 1-13\nBroadcasting deauth to ALL devices...';
                 toast('TRUE DEAUTH ACTIVATED!', 'error');
             } catch(e) { toast(e, 'error'); }
         }
@@ -866,13 +866,13 @@
             try {
                 if (bleSpamRunning) {
                     await fetch('/blespam_stop');
-                    btn.textContent = '📡 Start BLE Spam';
+                    btn.textContent = '[WIFI] Start BLE Spam';
                     btn.classList.remove('active');
                     bleSpamRunning = false;
                     toast('BLE Spam stopped', '');
                 } else {
                     await fetch('/blespam_start');
-                    btn.textContent = '⏹ Stop BLE Spam';
+                    btn.textContent = '[STOP] Stop BLE Spam';
                     btn.classList.add('active');
                     bleSpamRunning = true;
                     toast('BLE Spam started!', 'success');
@@ -926,7 +926,7 @@
             if (active) {
                 card.classList.add('active');
                 card.innerHTML = `
-                    <div class="attack-icon">${title.includes('TRUE') ? '💀' : '⚡'}</div>
+                    <div class="attack-icon">${title.includes('TRUE') ? '[KILL]' : '[PWR]'}</div>
                     <div class="attack-title">${title}</div>
                     <div class="attack-subtitle">Attack in progress...</div>
                 `;
@@ -935,7 +935,7 @@
             } else {
                 card.classList.remove('active');
                 card.innerHTML = `
-                    <div class="attack-icon">🎯</div>
+                    <div class="attack-icon">[TARGET]</div>
                     <div class="attack-title">No Attack Running</div>
                     <div class="attack-subtitle">Select targets and start an attack</div>
                 `;
