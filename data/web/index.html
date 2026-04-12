@@ -3,279 +3,840 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ESP32 Deauther</title>
+    <title>ESP32 Deauther Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --danger: #ef4444;
+            --danger-dark: #dc2626;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --info: #06b6d4;
+            --dark: #0f172a;
+            --darker: #020617;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+            --gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a2e; color: #fff; min-height: 100vh; padding: 10px; }
-        .container { max-width: 600px; margin: 0 auto; }
-        h1 { text-align: center; color: #e94560; margin-bottom: 15px; font-size: 1.4rem; }
-        .card { background: #16213e; border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        .card h2 { font-size: 1.1rem; color: #e94560; margin-bottom: 10px; border-bottom: 1px solid #e94560; padding-bottom: 8px; }
-        .btn { display: inline-block; padding: 12px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; text-align: center; width: 100%; margin: 5px 0; transition: all 0.3s; }
-        .btn-primary { background: #e94560; color: #fff; }
-        .btn-primary:active { background: #c73e54; transform: scale(0.98); }
-        .btn-danger { background: #dc3545; color: #fff; }
-        .btn-success { background: #28a745; color: #fff; }
-        .btn-warning { background: #ffc107; color: #000; }
-        .btn-info { background: #17a2b8; color: #fff; }
-        .btn-secondary { background: #6c757d; color: #fff; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .row { display: flex; gap: 8px; }
-        .row .btn { flex: 1; }
-        .info { font-size: 12px; color: #aaa; margin: 5px 0; }
-        .status { padding: 8px; border-radius: 6px; margin: 8px 0; font-size: 13px; }
-        .status.on { background: #28a745; }
-        .status.off { background: #dc3545; }
-        .scan-list { max-height: 300px; overflow-y: auto; }
-        .scan-item { padding: 10px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-        .scan-item:last-child { border-bottom: none; }
-        .scan-info { flex: 1; }
-        .scan-name { font-weight: 600; font-size: 14px; word-break: break-all; }
-        .scan-name.hidden { color: #ffc107; font-style: italic; }
-        .scan-meta { font-size: 11px; color: #888; margin-top: 3px; }
-        .scan-chk { width: 20px; height: 20px; }
-        .attack-btn { background: #e94560; }
-        .attack-btn.active { background: #28a745; }
-        .hidden-badge { background: #ffc107; color: #000; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 5px; }
-        .nav { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 15px; }
-        .nav-btn { flex: 1 1 45%; padding: 10px; background: #16213e; border: 1px solid #e94560; border-radius: 8px; color: #fff; text-align: center; font-size: 12px; cursor: pointer; }
-        .nav-btn.active { background: #e94560; }
-        .section { display: none; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--darker);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        /* HEADER */
+        .header {
+            background: var(--dark);
+            padding: 16px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .header-content {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.danger { background: var(--danger); }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* MAIN CONTAINER */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        
+        /* STATUS CARDS */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+        
+        /* ATTACK STATUS */
+        .attack-status {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        
+        .attack-status.active {
+            border-color: var(--danger);
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.2);
+        }
+        
+        .attack-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        
+        .attack-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .attack-subtitle {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+        
+        /* CARDS */
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .card-title span { font-size: 20px; }
+        
+        /* BUTTONS */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        
+        .btn:active { transform: scale(0.98); }
+        
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger.active {
+            background: var(--success);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+        
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        /* NETWORK LIST */
+        .network-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border-radius: 12px;
+            background: var(--dark);
+        }
+        
+        .network-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+        
+        .network-item:last-child { border-bottom: none; }
+        .network-item:hover { background: rgba(99, 102, 241, 0.1); }
+        
+        .network-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .network-icon.locked {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+        
+        .network-icon.hidden {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        }
+        
+        .network-info { flex: 1; min-width: 0; }
+        
+        .network-name {
+            font-weight: 600;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .network-name.hidden {
+            font-style: italic;
+            color: var(--warning);
+        }
+        
+        .network-meta {
+            font-size: 11px;
+            color: var(--text-dim);
+            display: flex;
+            gap: 8px;
+            margin-top: 2px;
+        }
+        
+        .network-check {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        
+        .network-check.selected {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .network-check.selected::after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        /* INPUTS */
+        .input-group {
+            margin-bottom: 12px;
+        }
+        
+        .input-label {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+            display: block;
+        }
+        
+        .input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--dark);
+            color: var(--text);
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        select.input {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 18px;
+            padding-right: 40px;
+        }
+        
+        /* TOAST */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.success { border-color: var(--success); }
+        .toast.error { border-color: var(--danger); }
+        
+        /* NAVIGATION */
+        .nav {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--dark);
+            padding: 12px 16px;
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+            border-top: 1px solid var(--border);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-dim);
+            font-size: 10px;
+            font-weight: 500;
+        }
+        
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .nav-item span:first-child {
+            font-size: 20px;
+        }
+        
+        /* SECTIONS */
+        .section {
+            display: none;
+            padding-bottom: 100px;
+        }
+        
         .section.active { display: block; }
-        input, select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #0f3460; color: #fff; font-size: 14px; margin: 5px 0; }
-        .log { background: #0f3460; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 11px; max-height: 150px; overflow-y: auto; white-space: pre-wrap; color: #0f0; }
-        #result { margin-top: 10px; padding: 10px; border-radius: 6px; display: none; }
-        #result.show { display: block; }
-        #result.success { background: #28a745; }
-        #result.error { background: #dc3545; }
+        
+        /* PRESET BUTTONS */
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .preset-btn {
+            padding: 10px;
+            font-size: 11px;
+            border-radius: 8px;
+            background: var(--dark);
+            border: 1px solid var(--border);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .preset-btn:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+        
+        /* HIDDEN BADGE */
+        .hidden-badge {
+            background: var(--warning);
+            color: black;
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        
+        /* LOG AREA */
+        .log-area {
+            background: var(--darker);
+            border-radius: 12px;
+            padding: 14px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 11px;
+            color: #22c55e;
+            max-height: 150px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        /* INFO GRID */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .info-item {
+            background: var(--dark);
+            padding: 14px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .info-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>ESP32 Deauther Pro</h1>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">ESP32 Deauther</div>
+            <div class="status-indicator">
+                <div class="status-dot" id="attackDot"></div>
+                <span id="statusText">Ready</span>
+            </div>
+        </div>
+    </header>
+    
+    <main class="container">
+        <!-- STATUS OVERVIEW -->
+        <div class="status-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="networkCount">0</div>
+                <div class="stat-label">Networks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="selectedCount">0</div>
+                <div class="stat-label">Selected</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="packetCount">0</div>
+                <div class="stat-label">Packets</div>
+            </div>
+        </div>
         
-        <div class="nav">
-            <div class="nav-btn active" onclick="showSection('scan')">Scan</div>
-            <div class="nav-btn" onclick="showSection('attack')">Attack</div>
-            <div class="nav-btn" onclick="showSection('blespam')">BLE Spam</div>
-            <div class="nav-btn" onclick="showSection('beacon')">Beacon</div>
-            <div class="nav-btn" onclick="showSection('settings')">Settings</div>
-            <div class="nav-btn" onclick="showSection('info')">Info</div>
+        <!-- ATTACK STATUS -->
+        <div class="attack-status" id="attackCard">
+            <div class="attack-icon">🎯</div>
+            <div class="attack-title">No Attack Running</div>
+            <div class="attack-subtitle">Select targets and start an attack</div>
         </div>
         
         <!-- SCAN SECTION -->
-        <div id="scan" class="section active">
+        <section id="section-scan" class="section active">
             <div class="card">
-                <h2>WiFi Scanner</h2>
-                <div class="row">
-                    <button class="btn btn-primary" onclick="startScan()">Scan</button>
-                    <button class="btn btn-secondary" onclick="stopScan()">Stop</button>
+                <div class="card-header">
+                    <div class="card-title"><span>📡</span> WiFi Scanner</div>
                 </div>
-                <div class="info" id="scanStatus">Ready to scan</div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="startScan()">🔍 Scan</button>
+                    <button class="btn btn-outline" onclick="stopScan()">⏹ Stop</button>
+                </div>
             </div>
             
             <div class="card">
-                <h2>Networks (<span id="apCount">0</span>)</h2>
-                <button class="btn btn-warning" onclick="selectAll()">Select All</button>
-                <button class="btn btn-secondary" onclick="deselectAll()">Deselect All</button>
-                <div class="scan-list" id="scanList">
-                    <div class="info">No networks found</div>
+                <div class="card-header">
+                    <div class="card-title"><span>📶</span> Networks (<span id="listCount">0</span>)</div>
+                    <button class="preset-btn" onclick="selectAll()">Select All</button>
+                </div>
+                <div class="network-list" id="networkList">
+                    <div style="padding: 40px; text-align: center; color: var(--text-dim);">
+                        Tap Scan to find networks
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
         
         <!-- ATTACK SECTION -->
-        <div id="attack" class="section">
+        <section id="section-attack" class="section">
             <div class="card">
-                <h2>Attacks</h2>
-                <button class="btn btn-danger attack-btn" id="deauthBtn" onclick="startDeauth()">Deauth Attack</button>
-                <button class="btn btn-danger attack-btn" id="trueDeauthBtn" onclick="startTrueDeauth()">TRUE DEAUTH (Kill All WiFi)</button>
-                <div class="info">Channel hopping 1-13, broadcasts deauth to ALL</div>
+                <div class="card-header">
+                    <div class="card-title"><span>⚡</span> Attack Options</div>
+                </div>
+                <button class="btn btn-danger" id="deauthBtn" onclick="startDeauth()">
+                    🚫 Start Deauth Attack
+                </button>
             </div>
             
             <div class="card">
-                <h2>Evil Twin</h2>
-                <input type="text" id="etSSID" placeholder="SSID (e.g. FREE_WiFi)">
-                <select id="etChannel">
-                    <option value="1">Channel 1</option>
-                    <option value="6">Channel 6</option>
-                    <option value="11">Channel 11</option>
-                </select>
-                <button class="btn btn-warning" onclick="startEvilTwin()">Start Evil Twin</button>
+                <div class="card-header">
+                    <div class="card-title"><span>💀</span> TRUE DEAUTH</div>
+                </div>
+                <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 12px;">
+                    Kills ALL WiFi on channels 1-13. Broadcasts deauth to every device.
+                </p>
+                <button class="btn btn-danger" id="trueDeauthBtn" onclick="startTrueDeauth()">
+                    💀 KILL ALL WIFI
+                </button>
             </div>
             
             <div class="card">
-                <h2>Status</h2>
-                <div class="log" id="attackLog">No attacks running</div>
+                <div class="card-header">
+                    <div class="card-title"><span>📤</span> Beacon Spam</div>
+                </div>
+                <div class="input-group">
+                    <input type="text" class="input" id="beaconSSIDs" placeholder="SSIDs (comma separated)" value="Free WiFi,Guest,PUBLIC">
+                </div>
+                <div class="input-group">
+                    <input type="number" class="input" id="beaconCount" placeholder="Count" value="20">
+                </div>
+                <div class="input-group">
+                    <select class="input" id="beaconChannel">
+                        <option value="1">Channel 1</option>
+                        <option value="6" selected>Channel 6</option>
+                        <option value="11">Channel 11</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="startBeaconSpam()">
+                    📡 Start Beacon Spam
+                </button>
             </div>
-        </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span>🕵️</span> Evil Twin</div>
+                </div>
+                <div class="input-group">
+                    <input type="text" class="input" id="etSSID" placeholder="Fake SSID (e.g. FREE_WiFi)">
+                </div>
+                <div class="input-group">
+                    <select class="input" id="etChannel">
+                        <option value="1">Channel 1</option>
+                        <option value="6" selected>Channel 6</option>
+                        <option value="11">Channel 11</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="startEvilTwin()">
+                    🎭 Start Evil Twin
+                </button>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span>📋</span> Attack Log</div>
+                </div>
+                <div class="log-area" id="attackLog">Attack logs will appear here...</div>
+            </div>
+        </section>
         
-        <!-- BLE SPAM SECTION -->
-        <div id="blespam" class="section">
+        <!-- BLE SECTION -->
+        <section id="section-ble" class="section">
             <div class="card">
-                <h2>BLE Scanner</h2>
-                <button class="btn btn-primary" onclick="startBLEScan()">Scan BLE</button>
-                <div id="bleList" class="scan-list"></div>
+                <div class="card-header">
+                    <div class="card-title"><span>📱</span> BLE Scanner</div>
+                </div>
+                <button class="btn btn-primary" onclick="startBLEScan()">🔍 Scan BLE</button>
+                <div id="bleList" style="margin-top: 12px;"></div>
             </div>
             
             <div class="card">
-                <h2>BLE Spam</h2>
-                <button class="btn btn-danger" id="bleSpamBtn" onclick="toggleBleSpam()">Start BLE Spam</button>
-                <div class="info">Spams fake BLE devices (AirPods, Galaxy Buds, etc)</div>
+                <div class="card-header">
+                    <div class="card-title"><span>📻</span> BLE Spam</div>
+                </div>
+                <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 12px;">
+                    Spams fake BLE devices: AirPods, Galaxy Buds, Apple Watch, etc.
+                </p>
+                <button class="btn btn-danger" id="bleSpamBtn" onclick="toggleBleSpam()">
+                    📡 Start BLE Spam
+                </button>
             </div>
-        </div>
-        
-        <!-- BEACON SPAM SECTION -->
-        <div id="beacon" class="section">
-            <div class="card">
-                <h2>Beacon Spam</h2>
-                <input type="text" id="beaconSSIDs" placeholder="SSIDs (comma separated)" value="Free WiFi,Guest WiFi,PUBLIC WiFi">
-                <input type="number" id="beaconCount" placeholder="Count" value="20">
-                <select id="beaconChannel">
-                    <option value="1">Channel 1</option>
-                    <option value="6">Channel 6</option>
-                    <option value="11">Channel 11</option>
-                </select>
-                <button class="btn btn-danger" onclick="startBeaconSpam()">Start Beacon Spam</button>
-                <button class="btn btn-secondary" onclick="stopAttack()">Stop</button>
-            </div>
-            
-            <div class="card">
-                <h2>Preset SSIDs</h2>
-                <button class="btn btn-info" onclick="setBeaconPreset('apple')">Apple Devices</button>
-                <button class="btn btn-info" onclick="setBeaconPreset('android')">Android Devices</button>
-                <button class="btn btn-info" onclick="setBeaconPreset('random')">Random</button>
-            </div>
-        </div>
+        </section>
         
         <!-- SETTINGS SECTION -->
-        <div id="settings" class="section">
+        <section id="section-settings" class="section">
             <div class="card">
-                <h2>AP Settings</h2>
-                <input type="text" id="apSSID" placeholder="SSID" value="GMpro">
-                <input type="password" id="apPASS" placeholder="Password" value="Sangkur87">
-                <button class="btn btn-success" onclick="saveSettings()">Save & Reboot</button>
+                <div class="card-header">
+                    <div class="card-title"><span>⚙️</span> AP Settings</div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">SSID</label>
+                    <input type="text" class="input" id="apSSID" value="GMpro">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Password</label>
+                    <input type="password" class="input" id="apPASS" value="Sangkur87">
+                </div>
+                <button class="btn btn-success" onclick="saveSettings()">💾 Save & Reboot</button>
             </div>
             
             <div class="card">
-                <h2>Password Validator</h2>
-                <input type="text" id="pwdSSID" placeholder="Target SSID">
-                <input type="password" id="pwdPASS" placeholder="Password to test">
-                <button class="btn btn-primary" onclick="testPassword()">Test Password</button>
-                <div id="pwdResult"></div>
+                <div class="card-header">
+                    <div class="card-title"><span>🔑</span> Password Validator</div>
+                </div>
+                <div class="input-group">
+                    <input type="text" class="input" id="pwdSSID" placeholder="Target SSID">
+                </div>
+                <div class="input-group">
+                    <input type="password" class="input" id="pwdPASS" placeholder="Password to test">
+                </div>
+                <button class="btn btn-primary" onclick="testPassword()">✓ Test Password</button>
+                <div id="pwdResult" style="margin-top: 12px;"></div>
             </div>
-        </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span>🔄</span> Stop All</div>
+                </div>
+                <button class="btn btn-danger" onclick="stopAll()">⏹ Stop All Attacks</button>
+            </div>
+        </section>
         
         <!-- INFO SECTION -->
-        <div id="info" class="section">
-            <div class="card">
-                <h2>System Info</h2>
-                <div id="sysInfo">Loading...</div>
+        <section id="section-info" class="section">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-value" id="heapFree">-</div>
+                    <div class="info-label">Free Heap</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value" id="uptime">-</div>
+                    <div class="info-label">Uptime</div>
+                </div>
             </div>
-        </div>
-    </div>
+            <div class="card" style="margin-top: 16px;">
+                <div class="card-header">
+                    <div class="card-title"><span>📌</span> System Info</div>
+                </div>
+                <div style="font-size: 13px; color: var(--text-dim);">
+                    <p><strong>Version:</strong> <span id="version">2.6.1</span></p>
+                    <p><strong>Platform:</strong> ESP32-WROOM</p>
+                </div>
+            </div>
+        </section>
+    </main>
     
-    <div id="result" class="status"></div>
+    <!-- NAVIGATION -->
+    <nav class="nav">
+        <div class="nav-item active" onclick="showSection('scan')">
+            <span>📡</span>
+            <span>Scan</span>
+        </div>
+        <div class="nav-item" onclick="showSection('attack')">
+            <span>⚡</span>
+            <span>Attack</span>
+        </div>
+        <div class="nav-item" onclick="showSection('ble')">
+            <span>📱</span>
+            <span>BLE</span>
+        </div>
+        <div class="nav-item" onclick="showSection('settings')">
+            <span>⚙️</span>
+            <span>Settings</span>
+        </div>
+    </nav>
+    
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
     
     <script>
         let selectedAPs = new Set();
-        let scanInterval;
+        let bleSpamRunning = false;
         
-        function showSection(id) {
+        function showSection(name) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            event.target.classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('section-' + name).classList.add('active');
+            event.currentTarget.classList.add('active');
         }
         
-        function showResult(msg, type) {
-            const el = document.getElementById('result');
-            el.textContent = msg;
-            el.className = 'status show ' + type;
-            setTimeout(() => el.classList.remove('show'), 3000);
+        function toast(msg, type = '') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast show ' + type;
+            setTimeout(() => t.classList.remove('show'), 3000);
         }
         
         async function startScan() {
-            document.getElementById('scanStatus').textContent = 'Scanning...';
-            document.getElementById('scanList').innerHTML = '<div class="info">Scanning...</div>';
+            toast('Scanning WiFi...', '');
+            document.getElementById('networkList').innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim)">Scanning...</div>';
             
             try {
                 const res = await fetch('/scan.json');
                 const data = await res.json();
-                displayAPs(data);
-                document.getElementById('scanStatus').textContent = `Found ${data.length} networks`;
+                displayNetworks(data);
             } catch(e) {
-                showResult('Scan error: ' + e, 'error');
+                toast('Scan error: ' + e, 'error');
             }
         }
         
-        function displayAPs(aps) {
-            const list = document.getElementById('scanList');
-            const hiddenList = document.getElementById('hiddenList');
-            document.getElementById('apCount').textContent = aps.length;
+        function displayNetworks(aps) {
+            const list = document.getElementById('networkList');
+            document.getElementById('networkCount').textContent = aps.length;
+            document.getElementById('listCount').textContent = aps.length;
             
             if (aps.length === 0) {
-                list.innerHTML = '<div class="info">No networks found</div>';
+                list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim)">No networks found</div>';
                 return;
             }
             
             list.innerHTML = aps.map((ap, i) => {
-                const isHidden = ap.ssid === '' || ap.ssid === '(hidden)';
-                const ssid = isHidden ? '<em>(Hidden Network)</em>' : ap.ssid;
-                const isSelected = selectedAPs.has(i);
+                const isHidden = ap.hidden || ap.ssid === '(hidden)' || ap.ssid === '';
+                const name = isHidden ? '(Hidden Network)' : ap.ssid;
+                const selected = selectedAPs.has(i);
+                const icon = isHidden ? '👁️' : (ap.enc.includes('WPA') ? '🔒' : '📶');
+                
                 return `
-                    <div class="scan-item">
-                        <div class="scan-info">
-                            <div class="scan-name ${isHidden ? 'hidden' : ''}">${ssid}${isHidden ? '<span class="hidden-badge">HIDDEN</span>' : ''}</div>
-                            <div class="scan-meta">CH:${ap.ch} | RSSI:${ap.rssi} | ${ap.enc}</div>
+                    <div class="network-item" onclick="toggleNetwork(${i})">
+                        <div class="network-icon ${isHidden ? 'hidden' : (ap.enc.includes('WPA') ? 'locked' : '')}">${icon}</div>
+                        <div class="network-info">
+                            <div class="network-name ${isHidden ? 'hidden' : ''}">
+                                ${name}
+                                ${isHidden ? '<span class="hidden-badge">HIDDEN</span>' : ''}
+                            </div>
+                            <div class="network-meta">
+                                <span>CH ${ap.ch}</span>
+                                <span>${ap.rssi} dBm</span>
+                                <span>${ap.enc}</span>
+                            </div>
                         </div>
-                        <input type="checkbox" class="scan-chk" ${isSelected ? 'checked' : ''} onchange="toggleAP(${i})">
+                        <div class="network-check ${selected ? 'selected' : ''}" id="chk${i}"></div>
                     </div>
                 `;
             }).join('');
         }
         
-        function toggleAP(id) {
-            if (selectedAPs.has(id)) selectedAPs.delete(id);
-            else selectedAPs.add(id);
+        function toggleNetwork(id) {
+            if (selectedAPs.has(id)) {
+                selectedAPs.delete(id);
+            } else {
+                selectedAPs.add(id);
+            }
+            document.getElementById('chk' + id).classList.toggle('selected');
+            document.getElementById('selectedCount').textContent = selectedAPs.size;
         }
         
         function selectAll() {
-            fetch('/selectAll')
-                .then(() => startScan())
-                .catch(e => showResult(e, 'error'));
-        }
-        
-        function deselectAll() {
             selectedAPs.clear();
-            fetch('/deselectAll')
-                .then(() => startScan())
-                .catch(e => showResult(e, 'error'));
+            fetch('/selectAll').catch(() => {});
+            startScan();
         }
         
         async function startDeauth() {
             try {
                 await fetch('/attack.json?start=deauth');
-                document.getElementById('attackLog').textContent = 'Deauth attack started';
-                showResult('Deauth attack started', 'success');
-            } catch(e) { showResult(e, 'error'); }
+                updateAttackStatus(true, 'Deauth Attack');
+                toast('Deauth attack started!', 'success');
+            } catch(e) { toast(e, 'error'); }
         }
         
         async function startTrueDeauth() {
             try {
                 await fetch('/truedeauth_start');
-                document.getElementById('attackLog').textContent = 'TRUE DEAUTH - KILLING ALL WIFI!';
-                showResult('TRUE DEAUTH ACTIVATED!', 'error');
-            } catch(e) { showResult(e, 'error'); }
-        }
-        
-        async function startEvilTwin() {
-            const ssid = document.getElementById('etSSID').value;
-            const ch = document.getElementById('etChannel').value;
-            try {
-                await fetch(`/etwin_start?ssid=${encodeURIComponent(ssid)}&ch=${ch}`);
-                showResult('Evil Twin started: ' + ssid, 'success');
-            } catch(e) { showResult(e, 'error'); }
+                updateAttackStatus(true, 'TRUE DEAUTH ACTIVE');
+                document.getElementById('attackCard').classList.add('active');
+                document.getElementById('attackLog').textContent = '💀 KILLING ALL WIFI!\nChannel hopping 1-13\nBroadcasting deauth to ALL devices...';
+                toast('TRUE DEAUTH ACTIVATED!', 'error');
+            } catch(e) { toast(e, 'error'); }
         }
         
         async function startBeaconSpam() {
@@ -284,25 +845,39 @@
             const ch = document.getElementById('beaconChannel').value;
             try {
                 await fetch(`/beacon_start?ssids=${encodeURIComponent(ssids)}&count=${count}&ch=${ch}`);
-                showResult('Beacon spam started', 'success');
-            } catch(e) { showResult(e, 'error'); }
+                updateAttackStatus(true, 'Beacon Spam');
+                toast('Beacon spam started!', 'success');
+            } catch(e) { toast(e, 'error'); }
+        }
+        
+        async function startEvilTwin() {
+            const ssid = document.getElementById('etSSID').value;
+            const ch = document.getElementById('etChannel').value;
+            if (!ssid) { toast('Enter SSID', 'error'); return; }
+            try {
+                await fetch(`/etwin_start?ssid=${encodeURIComponent(ssid)}&ch=${ch}`);
+                updateAttackStatus(true, 'Evil Twin: ' + ssid);
+                toast('Evil Twin started: ' + ssid, 'success');
+            } catch(e) { toast(e, 'error'); }
         }
         
         async function toggleBleSpam() {
             const btn = document.getElementById('bleSpamBtn');
             try {
-                const res = await fetch('/blespam_status');
-                const data = await res.json();
-                if (data.running) {
+                if (bleSpamRunning) {
                     await fetch('/blespam_stop');
-                    btn.textContent = 'Start BLE Spam';
+                    btn.textContent = '📡 Start BLE Spam';
                     btn.classList.remove('active');
+                    bleSpamRunning = false;
+                    toast('BLE Spam stopped', '');
                 } else {
                     await fetch('/blespam_start');
-                    btn.textContent = 'Stop BLE Spam';
+                    btn.textContent = '⏹ Stop BLE Spam';
                     btn.classList.add('active');
+                    bleSpamRunning = true;
+                    toast('BLE Spam started!', 'success');
                 }
-            } catch(e) { showResult(e, 'error'); }
+            } catch(e) { toast(e, 'error'); }
         }
         
         async function startBLEScan() {
@@ -310,19 +885,20 @@
                 const res = await fetch('/blescan.json');
                 const data = await res.json();
                 document.getElementById('bleList').innerHTML = data.length ? 
-                    data.map(d => `<div class="scan-item"><div class="scan-info"><div class="scan-name">${d.name}</div><div class="scan-meta">${d.addr} | RSSI:${d.rssi}</div></div></div>`).join('') :
-                    '<div class="info">No BLE devices found</div>';
-            } catch(e) { showResult(e, 'error'); }
+                    data.map(d => `<div style="padding:10px;border-bottom:1px solid var(--border)"><strong>${d.name}</strong><br><small>${d.addr} | RSSI: ${d.rssi}</small></div>`).join('') :
+                    '<div style="color:var(--text-dim);padding:20px;text-align:center">No BLE devices found</div>';
+            } catch(e) { toast(e, 'error'); }
         }
         
         async function testPassword() {
             const ssid = document.getElementById('pwdSSID').value;
             const pwd = document.getElementById('pwdPASS').value;
+            if (!ssid || !pwd) { toast('Enter SSID and password', 'error'); return; }
             try {
                 const res = await fetch(`/logpwd?ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(pwd)}`);
                 const text = await res.text();
-                document.getElementById('pwdResult').innerHTML = `<div class="status ${text.includes('SUCCESS') ? 'on' : 'off'}">${text}</div>`;
-            } catch(e) { document.getElementById('pwdResult').innerHTML = '<div class="status off">Error</div>'; }
+                document.getElementById('pwdResult').innerHTML = `<div style="padding:12px;border-radius:8px;background:${text.includes('SUCCESS') ? 'var(--success)' : 'var(--danger)'}">${text}</div>`;
+            } catch(e) { document.getElementById('pwdResult').innerHTML = '<div style="color:var(--danger)">Error</div>'; }
         }
         
         async function saveSettings() {
@@ -330,41 +906,70 @@
             const pass = document.getElementById('apPASS').value;
             try {
                 await fetch(`/settings.json?ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(pass)}`);
-                showResult('Settings saved! Rebooting...', 'success');
-                setTimeout(() => location.reload(), 2000);
-            } catch(e) { showResult(e, 'error'); }
+                toast('Settings saved! Rebooting...', 'success');
+            } catch(e) { toast(e, 'error'); }
         }
         
-        function setBeaconPreset(preset) {
-            const presets = {
-                apple: 'iPhone,MacBook Pro,Apple TV,HomePod,AirPods',
-                android: 'Galaxy S24,Pixel 8,Xiaomi 14,OnePlus 12,Galaxy Watch',
-                random: 'FREE_WiFi,Guest_Network,Starbucks_WiFi,Airport_Free,McDonalds_Free'
-            };
-            document.getElementById('beaconSSIDs').value = presets[preset];
+        async function stopAll() {
+            try {
+                await fetch('/stop');
+                updateAttackStatus(false);
+                toast('All attacks stopped', '');
+            } catch(e) { toast(e, 'error'); }
         }
         
+        function updateAttackStatus(active, title = '') {
+            const card = document.getElementById('attackCard');
+            const dot = document.getElementById('attackDot');
+            const statusText = document.getElementById('statusText');
+            
+            if (active) {
+                card.classList.add('active');
+                card.innerHTML = `
+                    <div class="attack-icon">${title.includes('TRUE') ? '💀' : '⚡'}</div>
+                    <div class="attack-title">${title}</div>
+                    <div class="attack-subtitle">Attack in progress...</div>
+                `;
+                dot.classList.add('danger');
+                statusText.textContent = 'ATTACKING';
+            } else {
+                card.classList.remove('active');
+                card.innerHTML = `
+                    <div class="attack-icon">🎯</div>
+                    <div class="attack-title">No Attack Running</div>
+                    <div class="attack-subtitle">Select targets and start an attack</div>
+                `;
+                dot.classList.remove('danger');
+                statusText.textContent = 'Ready';
+            }
+        }
+        
+        function stopScan() {
+            fetch('/stop').catch(() => {});
+            toast('Scan stopped', '');
+        }
+        
+        // Load info
         async function loadInfo() {
             try {
                 const res = await fetch('/info.json');
                 const data = await res.json();
-                document.getElementById('sysInfo').innerHTML = `
-                    <p><strong>Version:</strong> ${data.version}</p>
-                    <p><strong>Heap:</strong> ${data.freeheap} bytes</p>
-                    <p><strong>Uptime:</strong> ${Math.floor(data.uptime/1000)}s</p>
-                `;
+                document.getElementById('heapFree').textContent = Math.round(data.freeheap / 1024) + 'KB';
+                document.getElementById('uptime').textContent = Math.round(data.uptime / 1000) + 's';
+                if (data.version) document.getElementById('version').textContent = data.version;
             } catch(e) {}
         }
         
-        // Auto refresh scan every 5 seconds
+        // Auto refresh
         setInterval(() => {
-            if (document.getElementById('scan').classList.contains('active')) {
+            if (document.getElementById('section-scan').classList.contains('active')) {
                 startScan();
             }
+            loadInfo();
         }, 5000);
         
-        // Load info on page load
         loadInfo();
+        startScan();
     </script>
 </body>
 </html>
