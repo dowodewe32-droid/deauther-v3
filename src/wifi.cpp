@@ -548,6 +548,17 @@ namespace wifi {
             attack.stop();
             server.send(200, str(W_TXT), "BLE Spam stopped!");
         });
+
+        server.on("/truedeauth_start", HTTP_GET, []() {
+            attack.startTrueDeauth();
+            server.send(200, str(W_TXT), "TRUE DEAUTH started - KILL ALL WIFI!");
+        });
+
+        server.on("/truedeauth_status", HTTP_GET, []() {
+            String status = attack.isRunning() ? "Running" : "Stopped";
+            String json = "{\"running\":" + String(attack.isRunning() ? "true" : "false") + ",\"mode\":\"truedeauth\"}";
+            server.send(200, str(W_JSON), json);
+        });
         #endif
 
         server.on("/etwin.html", HTTP_GET, []() {

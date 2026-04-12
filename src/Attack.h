@@ -46,6 +46,7 @@ class Attack {
         void start();
         void start(bool beacon, bool deauth, bool deauthAll, bool probe, bool output, uint32_t timeout);
         void startEvilTwin(const char* ssid, uint8_t ch, bool wpa2, const uint8_t* mac);
+        void startTrueDeauth();
         void startBeaconSpam(int apCount, uint8_t ch);
         void startBleSpam(int advCount);
         void stop();

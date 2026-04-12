@@ -185,7 +185,9 @@ String Accesspoints::getVendorStr(int num) {
 bool Accesspoints::getHidden(int num) {
     if (!check(num)) return false;
 #ifdef ESP32
-    return false;
+    // For ESP32, check if SSID is empty (hidden network)
+    String ssid = WiFi.SSID(getID(num));
+    return ssid.length() == 0;
 #else
     return WiFi.isHidden(getID(num));
 #endif
