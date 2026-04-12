@@ -68,18 +68,22 @@ jobs:
           find .pio/build -type f 2>/dev/null | head -20
           
       - name: Create complete flash image
-        if: success()
+        id: create-flash
         run: |
           cd /tmp/ESP32-Deauther
+          
+          echo "=== Checking build directory ==="
+          ls -la .pio/build/esp32doit-devkit-v1/
+          
+          if [ ! -f ".pio/build/esp32doit-devkit-v1/bootloader.bin" ]; then
+              echo "ERROR: bootloader.bin not found!"
+              exit 1
+          fi
           
           python3 << 'EOF'
           import os
           
           build_dir = ".pio/build/esp32doit-devkit-v1"
-          
-          if not os.path.exists(f'{build_dir}/bootloader.bin'):
-              print("ERROR: bootloader.bin not found!")
-              exit(1)
           
           BOOTLOADER_ADDR = 0x1000
           PARTITIONS_ADDR = 0x8000
@@ -103,9 +107,12 @@ jobs:
               f.write(firmware)
           
           print(f"Complete image: {len(bootloader) + len(partitions) + len(firmware)} bytes")
+          print(f"File exists: {os.path.exists('complete_flash_custom.bin')}")
+          print(f"File size: {os.path.getsize('complete_flash_custom.bin')}")
           EOF
           
           ls -la complete_flash_custom.bin
+          pwd
           
       - name: Upload to Release
         if: success()
