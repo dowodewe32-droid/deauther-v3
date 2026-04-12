@@ -112,16 +112,18 @@ jobs:
         run: |
           cd /tmp/ESP32-Deauther
           
-          RESPONSE=$(curl -s -X POST "https://api.github.com/repos/${{ github.repository }}/releases/308011086/assets?name=complete_flash_custom.bin" \
+          echo "=== Uploading complete_flash_custom.bin ==="
+          RESPONSE=$(curl -s -X POST "https://uploads.github.com/repos/${{ github.repository }}/releases/308011086/assets?name=complete_flash_custom.bin" \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Content-Type: application/octet-stream" \
             --data-binary @complete_flash_custom.bin)
           
-          echo "$RESPONSE" | grep -o '"browser_download_url":"[^"]*"' || echo "Upload response: $RESPONSE"
+          echo "$RESPONSE"
           
-          RESPONSE2=$(curl -s -X POST "https://api.github.com/repos/${{ github.repository }}/releases/308011086/assets?name=firmware.bin" \
+          echo "=== Uploading firmware.bin ==="
+          RESPONSE2=$(curl -s -X POST "https://uploads.github.com/repos/${{ github.repository }}/releases/308011086/assets?name=firmware.bin" \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Content-Type: application/octet-stream" \
             --data-binary @.pio/build/esp32doit-devkit-v1/firmware.bin)
           
-          echo "$RESPONSE2" | grep -o '"browser_download_url":"[^"]*"' || echo "Upload response: $RESPONSE2"
+          echo "$RESPONSE2"
