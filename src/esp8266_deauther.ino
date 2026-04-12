@@ -138,7 +138,9 @@ void setup() {
     Serial.println("[6] Starting AP...");
     
     // FORCE enable web settings (in case EEPROM has old/corrupt settings)
-    settings::webSettings.enabled = true;
+    web_settings_t webSet = settings::getWebSettings();
+    webSet.enabled = true;
+    settings::setWebSettings(webSet);
     
     wifi::startAP();
     Serial.println("[6] AP started!");
