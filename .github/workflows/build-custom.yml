@@ -28,9 +28,17 @@ jobs:
           rm -rf ESP32-Deauther
           git clone --depth 1 https://github.com/tesa-klebeband/ESP32-Deauther
           
-      - name: Copy web files
+      - name: Change SSID to GMpro
+        run: |
+          sed -i 's/#define AP_SSID "ESP32-Deauther"/#define AP_SSID "GMpro"/g' /tmp/ESP32-Deauther/include/definitions.h
+          sed -i 's/#define AP_PASS "esp32wroom32"/#define AP_PASS "Sangkur87"/g' /tmp/ESP32-Deauther/include/definitions.h
+          grep "AP_SSID\|AP_PASS" /tmp/ESP32-Deauther/include/definitions.h
+          
+      - name: Copy custom web files
         run: |
           cp -r /home/runner/work/deauther-v3/deauther-v3/data/web /tmp/ESP32-Deauther/data/
+          # Update web UI title
+          sed -i 's/<title>ESP32/<\/title>/<title>GMpro87dev<\/title>/g' /tmp/ESP32-Deauther/data/web/index.html 2>/dev/null || true
           
       - name: Install PlatformIO
         run: pip install --no-cache-dir platformio
@@ -38,7 +46,7 @@ jobs:
       - name: Build
         run: |
           cd /tmp/ESP32-Deauther
-          pio run -e esp32doit-devkit-v1 2>&1 | tail -30
+          pio run -e esp32doit-devkit-v1
           
       - name: Check build
         run: |
@@ -66,7 +74,7 @@ with open('GMpro87dev.bin', 'wb') as f:
     f.write(partitions)
     f.write(b'\xff' * (APP_ADDR - (PARTITIONS_ADDR + len(partitions))))
     f.write(firmware)
-print("Flash created: " + str(os.path.getsize('GMpro87dev.bin')) + " bytes")
+print("Flash: " + str(os.path.getsize('GMpro87dev.bin')) + " bytes")
 PYEOF
           
       - name: Upload to release
