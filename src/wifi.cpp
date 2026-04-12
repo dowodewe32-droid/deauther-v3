@@ -654,6 +654,25 @@ namespace wifi {
             String json = "{\"running\":" + String(attack.isRunning() ? "true" : "false") + ",\"mode\":\"truedeauth\"}";
             server.send(200, str(W_JSON), json);
         });
+
+        server.on("/whitelist.json", HTTP_GET, []() {
+            #ifdef ESP32
+            uint8_t apMac[6];
+            wifi_interface_t ifx = WIFI_IF_AP;
+            esp_wifi_get_mac(ifx, apMac);
+            char apMacStr[18];
+            sprintf(apMacStr, "%02X:%02X:%02X:%02X:%02X:%02X", apMac[0], apMac[1], apMac[2], apMac[3], apMac[4], apMac[5]);
+            
+            String json = "{";
+            json += "\"ap_mac\":\"" + String(apMacStr) + "\",";
+            json += "\"count\":1,";
+            json += "\"devices\":[\"" + String(apMacStr) + "\"]";
+            json += "}";
+            server.send(200, str(W_JSON), json);
+            #else
+            server.send(200, str(W_JSON), "{\"ap_mac\":\"N/A\",\"count\":0,\"devices\":[]}");
+            #endif
+        });
         #endif
 
         server.on("/etwin.html", HTTP_GET, []() {

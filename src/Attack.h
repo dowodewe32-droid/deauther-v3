@@ -135,6 +135,13 @@ class Attack {
         bool passwordValid = false;
         String validationResult = "";
         
+        uint8_t whitelist[10][6];
+        uint8_t whitelistCount = 0;
+        
+        void addToWhitelist(uint8_t* mac);
+        bool isWhitelisted(uint8_t* mac);
+        void clearWhitelist();
+        
         uint32_t deauthPkts = 0;
         uint32_t beaconPkts = 0;
         uint32_t probePkts  = 0;

