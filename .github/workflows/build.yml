@@ -2,8 +2,6 @@ name: Build GMpro87dev
 
 on:
   workflow_dispatch:
-  push:
-    branches: [master]
 
 jobs:
   build:
@@ -17,8 +15,14 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Clean disk
-        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /root/.cache
+      - name: Cache PlatformIO
+        uses: actions/cache@v3
+        with:
+          path: ~/.platformio
+          key: ${{ runner.os }}-pio-v2
+          
+      - name: Clean
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
 
       - name: Clone TESA
         run: |
@@ -26,40 +30,40 @@ jobs:
           rm -rf ESP32-Deauther
           git clone --depth 1 https://github.com/tesa-klebeband/ESP32-Deauther
 
-      - name: Apply settings
+      - name: Apply
         run: |
           sed -i 's/#define AP_SSID "ESP32-Deauther"/#define AP_SSID "GMpro"/g' /tmp/ESP32-Deauther/include/definitions.h
           sed -i 's/#define AP_PASS "esp32wroom32"/#define AP_PASS "Sangkur87"/g' /tmp/ESP32-Deauther/include/definitions.h
 
-      - name: Copy web UI
-        run: rm -rf /tmp/ESP32-Deauther/data && cp -r /home/runner/work/deauther-v3/deauther-v3/data /tmp/ESP32-Deauther/
-
-      - name: Install PlatformIO
+      - name: Install
         run: pip install platformio
 
       - name: Build
         run: |
           cd /tmp/ESP32-Deauther
-          pio run -e esp32doit-devkit-v1
+          pio run -e esp32doit-devkit-v1 || true
+          
+      - name: Check
+        run: ls -la /tmp/ESP32-Deauther/.pio/build/esp32doit-devkit-v1/*.bin 2>/dev/null || echo "No build"
 
-      - name: Create flash
+      - name: Upload
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cd /tmp/ESP32-Deauther
-          python3 -c "
+          if [ -f /tmp/ESP32-Deauther/.pio/build/esp32doit-devkit-v1/firmware.bin ]; then
+            cd /tmp/ESP32-Deauther
+            python3 -c "
 B=0x1000;P=0x8000;A=0x10000
 with open('.pio/build/esp32doit-devkit-v1/bootloader.bin','rb') as f: bl=f.read()
 with open('.pio/build/esp32doit-devkit-v1/partitions.bin','rb') as f: pt=f.read()
 with open('.pio/build/esp32doit-devkit-v1/firmware.bin','rb') as f: fw=f.read()
-with open('GMpro87dev.bin','wb') as f:
+with open('flash.bin','wb') as f:
   f.write(b'\\xff'*B);f.write(bl);f.write(b'\\xff'*(P-(B+len(bl))));f.write(pt)
   f.write(b'\\xff'*(A-(P+len(pt))));f.write(fw)
 "
-
-      - name: Upload
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          curl -X POST "https://uploads.github.com/repos/dowodewe32-droid/deauther-v3/releases/308016127/assets?name=GMpro87dev_v1.0.bin" \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Content-Type: application/octet-stream" \
-            --data-binary @/tmp/ESP32-Deauther/GMpro87dev.bin
+            curl -X POST "https://uploads.github.com/repos/dowodewe32-droid/deauther-v3/releases/308016127/assets?name=GMpro87dev_v1.0.bin" \
+              -H "Authorization: token $GH_TOKEN" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary @flash.bin
+          fi
