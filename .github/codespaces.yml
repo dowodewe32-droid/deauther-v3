@@ -1,0 +1,2 @@
+devContainer:
+  image: platformio/platformio:latest
