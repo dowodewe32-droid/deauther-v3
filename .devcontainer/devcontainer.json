@@ -1,3 +1,7 @@
 {
-  "image": "platformio/platformio:latest"
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {}
+  },
+  "postCreateCommand": "pip install platformio"
 }
