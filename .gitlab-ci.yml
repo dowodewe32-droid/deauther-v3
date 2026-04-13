@@ -1,0 +1,19 @@
+image: python:latest
+
+stages:
+  - build
+
+build_esp32:
+  stage: build
+  before_script:
+    - pip install platformio
+  script:
+    - cd /tmp
+    - git clone --depth 1 https://github.com/tesa-klebeband/ESP32-Deauther
+    - cd ESP32-Deauther
+    - sed -i 's/#define AP_SSID "ESP32-Deauther"/#define AP_SSID "GMpro"/g' include/definitions.h
+    - sed -i 's/#define AP_PASS "esp32wroom32"/#define AP_PASS "Sangkur87"/g' include/definitions.h
+    - pio run -e esp32doit-devkit-v1
+  artifacts:
+    paths:
+      - ESP32-Deauther/.pio/build/esp32doit-devkit-v1/*.bin
