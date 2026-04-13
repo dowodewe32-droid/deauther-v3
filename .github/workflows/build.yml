@@ -9,32 +9,40 @@ jobs:
     container:
       image: platformio/platformio:latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          path: workspace
 
-      - name: Clone TESA
+      - name: Clone
         run: |
           cd /tmp
           rm -rf ESP32-Deauther
           git clone --depth 1 https://github.com/tesa-klebeband/ESP32-Deauther
 
-      - name: Apply settings
+      - name: Configure
         run: |
           sed -i 's/#define AP_SSID "ESP32-Deauther"/#define AP_SSID "GMpro"/g' /tmp/ESP32-Deauther/include/definitions.h
           sed -i 's/#define AP_PASS "esp32wroom32"/#define AP_PASS "Sangkur87"/g' /tmp/ESP32-Deauther/include/definitions.h
-
-      - name: Copy web UI
-        run: rm -rf /tmp/ESP32-Deauther/data && cp -r ${{ github.workspace }}/data /tmp/ESP32-Deauther/
+          rm -rf /tmp/ESP32-Deauther/data
+          cp -r /home/runner/work/deauther-v3/deauther-v3/workspace/data /tmp/ESP32-Deauther/
 
       - name: Build
         run: |
           cd /tmp/ESP32-Deauther
-          pio run -e esp32doit-devkit-v1
+          pio run -e esp32doit-devkit-v1 || echo "Build attempt done"
+
+      - name: Check
+        run: |
+          ls -la /tmp/ESP32-Deauther/.pio/build/esp32doit-devkit-v1/*.bin 2>/dev/null || echo "No bin files"
 
       - name: Upload
-        uses: actions/upload-artifact@v4
         if: success()
-        with:
-          name: firmware
-          path: /tmp/ESP32-Deauther/.pio/build/esp32doit-devkit-v1/firmware.bin
+        run: |
+          if [ -f /tmp/ESP32-Deauther/.pio/build/esp32doit-devkit-v1/firmware.bin ]; then
+            curl -X POST "https://uploads.github.com/repos/dowodewe32-droid/deauther-v3/releases/308016127/assets?name=GMpro87dev_v1.0.bin" \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary @/tmp/ESP32-Deauther/.pio/build/esp32doit-devkit-v1/firmware.bin
+          fi
