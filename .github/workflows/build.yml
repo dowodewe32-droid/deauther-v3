@@ -5,40 +5,41 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-4xlarge
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
+        with:
+          fetch-depth: 1
+          
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /home/*/.cache
+          docker system prune -af --volumes || true
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          
       - name: Setup Python
         uses: actions/setup-python@v5
-        
+        with:
+          python-version: '3.11'
+          
       - name: Install PlatformIO
         run: pip install platformio
         
-      - name: Clone TESA
+      - name: Build ESP32 Firmware
         run: |
-          cd /tmp
-          rm -rf ESP32-Deauther
-          git clone --depth 1 https://github.com/tesa-klebeband/ESP32-Deauther
+          cd ESP32_ONLY_TEST
+          pio run
           
-      - name: Apply Settings
+      - name: Create Flash Image
         run: |
-          sed -i 's/#define AP_SSID "ESP32-Deauther"/#define AP_SSID "GMpro"/g' /tmp/ESP32-Deauther/include/definitions.h
-          sed -i 's/#define AP_PASS "esp32wroom32"/#define AP_PASS "Sangkur87"/g' /tmp/ESP32-Deauther/include/definitions.h
+          python3 ${{ github.workspace }}/create_flash.py
           
-      - name: Copy Web UI
-        run: |
-          rm -rf /tmp/ESP32-Deauther/data
-          cp -r ${{ github.workspace }}/data /tmp/ESP32-Deauther/
-          
-      - name: Build
-        run: |
-          cd /tmp/ESP32-Deauther
-          pio run -e esp32doit-devkit-v1
-          
-      - name: Upload
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: firmware
-          path: /tmp/ESP32-Deauther/.pio/build/esp32doit-devkit-v1/firmware.bin
+          path: |
+            ${{ github.workspace }}/GMpro87dev_firmware.bin
+            ${{ github.workspace }}/ESP32_ONLY_TEST/.pio/build/esp32dev/firmware.bin
