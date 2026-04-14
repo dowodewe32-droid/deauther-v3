@@ -954,7 +954,7 @@ void Attack::bleSpamEddystone() {
             serviceData += (char)encoded[i];
         }
         
-        advData.setServiceData(serviceData);
+        advData.setServiceData(BLEUUID("FEAA"), serviceData);
         advData.setName("Eddystone-URL");
     } else {
         std::string serviceData;
@@ -970,7 +970,7 @@ void Attack::bleSpamEddystone() {
             serviceData += (char)random(256);
         }
         
-        advData.setServiceData(serviceData);
+        advData.setServiceData(BLEUUID("FEAA"), serviceData);
         advData.setName("Eddystone-UID");
     }
     
