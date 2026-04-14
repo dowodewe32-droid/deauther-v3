@@ -20,10 +20,9 @@ jobs:
           sed -i 's/ESP32-Deauther/GMpro/g' /tmp/E32/include/definitions.h
           sed -i 's/esp32wroom32/Sangkur87/g' /tmp/E32/include/definitions.h
           sed -i 's/NUM_FRAMES_PER_DEAUTH 16/NUM_FRAMES_PER_DEAUTH 100/g' /tmp/E32/include/definitions.h
+          sed -i 's/ESP32-Deauther/GMpro87dev/g' /tmp/E32/src/web_interface.cpp
       - name: Whitelist
         run: cp ${{ github.workspace }}/src/deauth_whitelist.cpp /tmp/E32/src/deauth.cpp
-      - name: WebUI
-        run: rm -rf /tmp/E32/data && cp -r ${{ github.workspace }}/data /tmp/E32/
       - name: Build
         run: cd /tmp/E32 && pio run -e esp32doit-devkit-v1
       - name: Package
