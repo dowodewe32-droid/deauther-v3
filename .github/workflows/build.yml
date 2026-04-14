@@ -8,27 +8,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Install PlatformIO
         run: pip install platformio
-      - name: Clone
-        run: cd /tmp && rm -rf E32 && git clone --depth 1 https://github.com/tesa-klebeband/ESP32-Deauther E32
-      - name: Config
-        run: |
-          sed -i 's/ESP32-Deauther/GMpro/g' /tmp/E32/include/definitions.h
-          sed -i 's/esp32wroom32/Sangkur87/g' /tmp/E32/include/definitions.h
-          sed -i 's/NUM_FRAMES_PER_DEAUTH 16/NUM_FRAMES_PER_DEAUTH 100/g' /tmp/E32/include/definitions.h
-      - name: Copy Custom Files
-        run: |
-          cp ${{ github.workspace }}/src/deauth_whitelist.cpp /tmp/E32/src/deauth.cpp
-          cp ${{ github.workspace }}/src/web_interface_full.cpp /tmp/E32/src/web_interface.cpp
-      - name: Build
-        run: cd /tmp/E32 && pio run -e esp32doit-devkit-v1
+      - name: Build ESP32
+        run: cd ${{ github.workspace }} && pio run -e esp32wroom
       - name: Package
         run: |
-          cd /tmp/E32/.pio/build/esp32doit-devkit-v1
+          cd ${{ github.workspace }}/.pio/build/esp32wroom
           python3 -c "B=0x1000;P=0x8000;A=0x10000;bl=open('bootloader.bin','rb').read();pt=open('partitions.bin','rb').read();fw=open('firmware.bin','rb').read();f=bytearray(A);f[B:B+len(bl)]=bl;f[P:P+len(pt)]=pt;f[A:A+len(fw)]=fw;open('${{ github.workspace }}/GMpro87dev_flash.bin','wb').write(f)"
       - uses: actions/upload-artifact@v4
         with:
