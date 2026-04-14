@@ -270,7 +270,7 @@ void handleScan() {
     int n = WiFi.scanNetworks();
     for (int i = 0; i < n && i < 20; i++) {
         html += "<tr><td>" + WiFi.SSID(i) + "</td><td>" + WiFi.channel(i) + "</td><td>" + WiFi.RSSI(i) + " dBm</td>";
-        html += "<td><input type='checkbox' data-bssid='" + WiFi.BSSID(i) + "'></td></tr>";
+        String bssid; for(int b=0;b<6;b++) { bssid += (b?":":"") + String(WiFi.BSSID(i)[b], HEX); } html += "<td><input type='checkbox' data-bssid='" + bssid + "'></td></tr>";
     }
     html += "</table>";
     if (n == 0) html = "<p>No networks found</p>";
