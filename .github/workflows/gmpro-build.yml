@@ -1,0 +1,66 @@
+name: GMpro Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Clone TESA
+        run: |
+          cd /tmp
+          rm -rf ESP32-Deauther
+          git clone --depth 1 https://github.com/tesa-klebeband/ESP32-Deauther
+
+      - name: Apply Settings
+        run: |
+          sed -i 's/#define AP_SSID "ESP32-Deauther"/#define AP_SSID "GMpro"/g' /tmp/ESP32-Deauther/include/definitions.h
+          sed -i 's/#define AP_PASS "esp32wroom32"/#define AP_PASS "Sangkur87"/g' /tmp/ESP32-Deauther/include/definitions.h
+          sed -i 's/#define NUM_FRAMES_PER_DEAUTH 16/#define NUM_FRAMES_PER_DEAUTH 100/g' /tmp/ESP32-Deauther/include/definitions.h
+          sed -i 's/"TESA ESP32 Deauther"/"GMpro87dev v1.0"/g' /tmp/ESP32-Deauther/include/definitions.h
+
+      - name: Add Whitelist Protection
+        run: cp ${{ github.workspace }}/src/deauth_whitelist.cpp /tmp/ESP32-Deauther/src/deauth.cpp
+
+      - name: Copy Web UI
+        run: |
+          rm -rf /tmp/ESP32-Deauther/data
+          cp -r ${{ github.workspace }}/data /tmp/ESP32-Deauther/
+
+      - name: Build
+        run: cd /tmp/ESP32-Deauther && pio run -e esp32doit-devkit-v1
+
+      - name: Create Complete Flash
+        run: |
+          cd /tmp/ESP32-Deauther/.pio/build/esp32doit-devkit-v1
+          python3 << 'PYEOF'
+BOOTLOADER = 0x1000
+PARTITIONS = 0x8000
+APP = 0x10000
+with open("bootloader.bin", "rb") as f: bl = f.read()
+with open("partitions.bin", "rb") as f: pt = f.read()
+with open("firmware.bin", "rb") as f: fw = f.read()
+flash = bytearray(APP)
+flash[BOOTLOADER:BOOTLOADER+len(bl)] = bl
+flash[PARTITIONS:PARTITIONS+len(pt)] = pt
+flash[APP:APP+len(fw)] = fw
+with open("${{ github.workspace }}/GMpro87dev_flash.bin", "wb") as f: f.write(flash)
+print("Done")
+PYEOF
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: ${{ github.workspace }}/GMpro87dev_flash.bin
