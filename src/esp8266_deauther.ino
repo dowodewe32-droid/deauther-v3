@@ -91,9 +91,10 @@ void setup() {
     settings::setAccessPointSettings(apSet);
     
     // Enable SPIFFS mode for web files
-    web_settings_t webSet = settings::getWebSettings();
-    webSet.use_spiffs = true;
-    settings::setWebSettings(webSet);
+    web_settings_t ws = settings::getWebSettings();
+    ws.use_spiffs = true;
+    ws.enabled = true;
+    settings::setWebSettings(ws);
     
     settings::save();
     Serial.print("[3] SSID: ");
@@ -143,11 +144,6 @@ void setup() {
     }
 
     Serial.println("[6] Starting AP...");
-    
-    // FORCE enable web settings (in case EEPROM has old/corrupt settings)
-    web_settings_t webSet = settings::getWebSettings();
-    webSet.enabled = true;
-    settings::setWebSettings(webSet);
     
     wifi::startAP();
     Serial.println("[6] AP started!");
