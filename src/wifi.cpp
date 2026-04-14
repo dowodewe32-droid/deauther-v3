@@ -371,7 +371,8 @@ namespace wifi {
         #ifdef USE_PROGMEM_WEB_FILES
         // ================================================================
         // paste here the output of the webConverter.py
-        if (!settings::getWebSettings().use_spiffs) {
+        // Always register routes for embedded web files
+        {
             // Check for custom index.html in SPIFFS first
             server.on("/", HTTP_GET, []() {
                 // Always try SPIFFS first for custom web UI
@@ -484,7 +485,8 @@ namespace wifi {
             server.on("/lang/th.lang", HTTP_GET, []() {
                 sendProgmem(thlang, sizeof(thlang), W_JSON);
             });
-        }
+        } // end USE_PROGMEM_WEB_FILES block
+        } // close scope for embedded web files
         server.on("/lang/default.lang", HTTP_GET, []() {
             if (!settings::getWebSettings().use_spiffs) {
                 if (String(settings::getWebSettings().lang) == "hu") sendProgmem(hulang, sizeof(hulang), W_JSON);
