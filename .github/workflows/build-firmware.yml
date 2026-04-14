@@ -46,8 +46,31 @@ jobs:
           cd /tmp/ESP32-Deauther
           pio run -e esp32doit-devkit-v1
 
+      - name: Create Complete Flash Image
+        run: |
+          cd /tmp/ESP32-Deauther/.pio/build/esp32doit-devkit-v1
+          python3 -c "
+import os
+BOOTLOADER = 0x1000
+PARTITIONS = 0x8000
+APP = 0x10000
+
+with open('bootloader.bin', 'rb') as f: bl = f.read()
+with open('partitions.bin', 'rb') as f: pt = f.read()
+with open('firmware.bin', 'rb') as f: fw = f.read()
+
+flash = bytearray(APP)
+flash[BOOTLOADER:BOOTLOADER+len(bl)] = bl
+flash[PARTITIONS:PARTITIONS+len(pt)] = pt
+flash[APP:APP+len(fw)] = fw
+
+with open('${{ github.workspace }}/GMpro87dev_flash.bin', 'wb') as f:
+    f.write(flash)
+print(f'Created flash.bin: {len(flash)} bytes')
+"
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: firmware
-          path: /tmp/ESP32-Deauther/.pio/build/esp32doit-devkit-v1/firmware.bin
+          path: ${{ github.workspace }}/GMpro87dev_flash.bin
