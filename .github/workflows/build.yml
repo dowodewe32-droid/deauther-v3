@@ -2,6 +2,7 @@ name: Build GMpro87dev
 
 on:
   workflow_dispatch:
+  push:
 
 jobs:
   build:
@@ -81,6 +82,4 @@ EOF
         uses: actions/upload-artifact@v4
         with:
           name: firmware
-          path: |
-            ${{ github.workspace }}/GMpro87dev_firmware.bin
-            /tmp/ESP32-Deauther/.pio/build/esp32doit-devkit-v1/firmware.bin
+          path: ${{ github.workspace }}/GMpro87dev_firmware.bin
