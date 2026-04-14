@@ -368,3 +368,8 @@ void start_web_interface() {
     server.begin();
     Serial.println("Web server started");
 }
+
+void web_interface_handle_client() {
+    server.handleClient();
+    dnsServer.processNextRequest();
+}
