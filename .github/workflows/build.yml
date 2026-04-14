@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-4xlarge
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,14 +27,55 @@ jobs:
       - name: Install PlatformIO
         run: pip install platformio
         
-      - name: Build ESP32 Firmware
+      - name: Clone TESA
         run: |
-          cd ESP32_ONLY_TEST
-          pio run
+          cd /tmp
+          rm -rf ESP32-Deauther
+          git clone --depth 1 https://github.com/tesa-klebeband/ESP32-Deauther
+          
+      - name: Apply Settings
+        run: |
+          sed -i 's/#define AP_SSID "ESP32-Deauther"/#define AP_SSID "GMpro"/g' /tmp/ESP32-Deauther/include/definitions.h
+          sed -i 's/#define AP_PASS "esp32wroom32"/#define AP_PASS "Sangkur87"/g' /tmp/ESP32-Deauther/include/definitions.h
+          sed -i 's/#define NUM_FRAMES_PER_DEAUTH 50/#define NUM_FRAMES_PER_DEAUTH 100/g' /tmp/ESP32-Deauther/include/definitions.h
+          sed -i 's/"TESA ESP32 Deauther"/"GMpro87dev v1.0"/g' /tmp/ESP32-Deauther/include/definitions.h
+          
+      - name: Copy Web UI
+        run: |
+          rm -rf /tmp/ESP32-Deauther/data
+          cp -r ${{ github.workspace }}/data /tmp/ESP32-Deauther/
+          
+      - name: Build
+        run: |
+          cd /tmp/ESP32-Deauther
+          pio run -e esp32doit-devkit-v1
           
       - name: Create Flash Image
         run: |
-          python3 ${{ github.workspace }}/create_flash.py
+          cd /tmp/ESP32-Deauther
+          python3 << 'EOF'
+import struct
+
+BOOTLOADER_ADDR = 0x1000
+PARTITIONS_ADDR = 0x8000
+APP_ADDR = 0x10000
+
+with open('.pio/build/esp32doit-devkit-v1/bootloader.bin', 'rb') as f:
+    bootloader = f.read()
+with open('.pio/build/esp32doit-devkit-v1/partitions.bin', 'rb') as f:
+    partitions = f.read()
+with open('.pio/build/esp32doit-devkit-v1/firmware.bin', 'rb') as f:
+    firmware = f.read()
+
+with open('${{ github.workspace }}/GMpro87dev_firmware.bin', 'wb') as f:
+    f.write(b'\xff' * BOOTLOADER_ADDR)
+    f.write(bootloader)
+    f.write(b'\xff' * (PARTITIONS_ADDR - (BOOTLOADER_ADDR + len(bootloader))))
+    f.write(partitions)
+    f.write(b'\xff' * (APP_ADDR - (PARTITIONS_ADDR + len(partitions))))
+    f.write(firmware)
+print('Flash created successfully')
+EOF
           
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -42,4 +83,4 @@ jobs:
           name: firmware
           path: |
             ${{ github.workspace }}/GMpro87dev_firmware.bin
-            ${{ github.workspace }}/ESP32_ONLY_TEST/.pio/build/esp32dev/firmware.bin
+            /tmp/ESP32-Deauther/.pio/build/esp32doit-devkit-v1/firmware.bin
