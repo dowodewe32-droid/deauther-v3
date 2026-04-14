@@ -40,25 +40,28 @@ jobs:
           cp -r ${{ github.workspace }}/data /tmp/ESP32-Deauther/
 
       - name: Build
-        run: cd /tmp/ESP32-Deauther && pio run -e esp32doit-devkit-v1
+        run: |
+          cd /tmp/ESP32-Deauther
+          pio run -e esp32doit-devkit-v1
 
       - name: Create Complete Flash
         run: |
           cd /tmp/ESP32-Deauther/.pio/build/esp32doit-devkit-v1
-          python3 << 'PYEOF'
+          python3 -c "
+import os
 BOOTLOADER = 0x1000
 PARTITIONS = 0x8000
 APP = 0x10000
-with open("bootloader.bin", "rb") as f: bl = f.read()
-with open("partitions.bin", "rb") as f: pt = f.read()
-with open("firmware.bin", "rb") as f: fw = f.read()
+with open('bootloader.bin', 'rb') as f: bl = f.read()
+with open('partitions.bin', 'rb') as f: pt = f.read()
+with open('firmware.bin', 'rb') as f: fw = f.read()
 flash = bytearray(APP)
 flash[BOOTLOADER:BOOTLOADER+len(bl)] = bl
 flash[PARTITIONS:PARTITIONS+len(pt)] = pt
 flash[APP:APP+len(fw)] = fw
-with open("${{ github.workspace }}/GMpro87dev_flash.bin", "wb") as f: f.write(flash)
-print("Done")
-PYEOF
+with open('${{ github.workspace }}/GMpro87dev_flash.bin', 'wb') as f: f.write(flash)
+print('Done')
+"
 
       - uses: actions/upload-artifact@v4
         with:
