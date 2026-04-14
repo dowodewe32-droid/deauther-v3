@@ -49,6 +49,10 @@ class Attack {
         void startTrueDeauth();
         void startBeaconSpam(int apCount, uint8_t ch);
         void startBleSpam(int advCount);
+        void startBleSpamMode(int mode, int advCount);
+        void setBleSpamiBeacon(const char* uuid, uint16_t major, uint16_t minor, int8_t txPower);
+        void setBleSpamEddystone(const char* url, int type);
+        void setBleSpamInterval(uint16_t interval);
         void stop();
         void update();
 
@@ -101,6 +105,10 @@ class Attack {
         void trueDeauthUpdate();
         void beaconSpamUpdate();
         void bleSpamUpdate();
+        void bleSpamBasic();
+        void bleSpamiBeacon();
+        void bleSpamEddystone();
+        void bleSpamFast();
 
         void updateCounter();
 
@@ -130,6 +138,15 @@ class Attack {
         uint32_t beaconSpamPkts = 0;
         int bleSpamCount = 0;
         uint32_t bleSpamPkts = 0;
+        
+        int bleSpamMode = 0;
+        uint16_t bleSpamInterval = 100;
+        String bleSpamUUID = "E2C56DB5-DFFB-48D2-B060-D0F5A71096E0";
+        uint16_t bleSpamMajor = 0;
+        uint16_t bleSpamMinor = 0;
+        int8_t bleSpamTXPower = -59;
+        String bleSpamEddyURL = "https://goo.gl/AqUPzS";
+        int bleSpamEddyType = 0;
         
         bool validatingPassword = false;
         bool passwordValid = false;
