@@ -84,7 +84,7 @@ void setup() {
     // Force reset to default SSID/Password
     settings::reset();
     // Set explicitly in case reset didn't work
-    ap_settings_t apSet = settings::getAccessPointSettings();
+    access_point_settings_t apSet = settings::getAccessPointSettings();
     strncpy(apSet.ssid, "GMpro", 32);
     strncpy(apSet.password, "Sangkur87", 64);
     apSet.hidden = false;
