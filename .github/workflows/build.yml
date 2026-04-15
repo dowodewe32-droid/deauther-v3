@@ -29,8 +29,7 @@ jobs:
         
       - name: Build ESP32 Firmware
         run: |
-          cd ESP32_ONLY_TEST
-          pio run
+          pio run -e esp32wroom
           
       - name: Create Flash Image
         run: |
@@ -41,5 +40,5 @@ jobs:
         with:
           name: firmware
           path: |
-            ${{ github.workspace }}/GMpro87dev_firmware.bin
-            ${{ github.workspace }}/ESP32_ONLY_TEST/.pio/build/esp32dev/firmware.bin
+            ${{ github.workspace }}/GMpro87dev_flash.bin
+            ${{ github.workspace }}/.pio/build/esp32wroom/firmware.bin
