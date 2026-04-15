@@ -248,12 +248,11 @@ namespace wifi {
         prntln(settings::getAccessPointSettings().ssid);
         #endif
         
-        // Force GMpro/Sangkur87 as default
-        setSSID("GMpro");
-        setPassword("Sangkur87");
+        setSSID(settings::getAccessPointSettings().ssid);
+        setPassword(settings::getAccessPointSettings().password);
         setChannel(settings::getWifiSettings().channel);
-        setHidden(false);
-        setCaptivePortal(false);
+        setHidden(settings::getAccessPointSettings().hidden);
+        setCaptivePortal(settings::getWebSettings().captive_portal);
 
         if (settings::getWebSettings().use_spiffs) {
             copyWebFiles(false);
@@ -372,8 +371,7 @@ namespace wifi {
         #ifdef USE_PROGMEM_WEB_FILES
         // ================================================================
         // paste here the output of the webConverter.py
-        // Always register routes for embedded web files
-        if (true) {
+        if (!settings::getWebSettings().use_spiffs) {
             // Check for custom index.html in SPIFFS first
             server.on("/", HTTP_GET, []() {
                 // Always try SPIFFS first for custom web UI

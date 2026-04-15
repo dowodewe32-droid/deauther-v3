@@ -1,27 +1,45 @@
-name: Build
+name: Build GMpro87dev
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-4xlarge
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - uses: actions/setup-python@v5
+          
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /home/*/.cache
+          docker system prune -af --volumes || true
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          
       - name: Install PlatformIO
         run: pip install platformio
-      - name: Build ESP32
-        run: cd ${{ github.workspace }} && pio run -e esp32wroom
-      - name: Package
+        
+      - name: Build ESP32 Firmware
         run: |
-          cd ${{ github.workspace }}/.pio/build/esp32wroom
-          python3 -c "B=0x1000;P=0x8000;A=0x10000;bl=open('bootloader.bin','rb').read();pt=open('partitions.bin','rb').read();fw=open('firmware.bin','rb').read();f=bytearray(A);f[B:B+len(bl)]=bl;f[P:P+len(pt)]=pt;f[A:A+len(fw)]=fw;open('${{ github.workspace }}/GMpro87dev_flash.bin','wb').write(f)"
-      - uses: actions/upload-artifact@v4
+          cd ESP32_ONLY_TEST
+          pio run
+          
+      - name: Create Flash Image
+        run: |
+          python3 ${{ github.workspace }}/create_flash.py
+          
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: flash
-          path: ${{ github.workspace }}/GMpro87dev_flash.bin
+          name: firmware
+          path: |
+            ${{ github.workspace }}/GMpro87dev_firmware.bin
+            ${{ github.workspace }}/ESP32_ONLY_TEST/.pio/build/esp32dev/firmware.bin

@@ -719,35 +719,25 @@ uint32_t Attack::getBeaconSpamPkts() {
 }
 
 void Attack::startBleSpam(int advCount) {
-    startBleSpamMode(0, advCount);
-}
-
-void Attack::startBleSpamMode(int mode, int advCount) {
 #ifdef ESP32
     stop();
     running = true;
     bleSpam = true;
-    bleSpamMode = mode;
     bleSpamCount = advCount;
     bleSpamPkts = 0;
     attackStartTime = currentTime;
     
-    BLEDevice::init("GMpro87");
+    BLEDevice::init("");
     BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
+    pAdvertising->setMinInterval(0x20);
+    pAdvertising->setMaxInterval(0x40);
+    pAdvertising->setScanResponse(true);
     
     if (output) {
         prntln("Starting BLE Spam...");
-        prnt("Mode: ");
-        switch(mode) {
-            case 0: prntln("Basic Device Spam"); break;
-            case 1: prntln("iBeacon Spam"); break;
-            case 2: prntln("Eddystone-UID Spam"); break;
-            case 3: prntln("Eddystone-URL Spam"); break;
-            case 4: prntln("Fast Beacon Flood"); break;
-            default: prntln("Unknown"); break;
-        }
-        prnt("Count: ");
-        prntln(advCount);
+        prnt("Advertising ");
+        prnt(advCount);
+        prntln(" fake BLE devices");
     }
 #else
     if (output) {
@@ -756,257 +746,40 @@ void Attack::startBleSpamMode(int mode, int advCount) {
 #endif
 }
 
-void Attack::setBleSpamiBeacon(const char* uuid, uint16_t major, uint16_t minor, int8_t txPower) {
-    bleSpamUUID = String(uuid);
-    bleSpamMajor = major;
-    bleSpamMinor = minor;
-    bleSpamTXPower = txPower;
-}
-
-void Attack::setBleSpamEddystone(const char* url, int type) {
-    bleSpamEddyURL = String(url);
-    bleSpamEddyType = type;
-}
-
-void Attack::setBleSpamInterval(uint16_t interval) {
-    bleSpamInterval = interval;
-}
-
 void Attack::bleSpamUpdate() {
 #ifdef ESP32
     if (!bleSpam) return;
     
-    if (bleSpamPkts == 0 || currentTime - beacon.time >= bleSpamInterval) {
-        switch(bleSpamMode) {
-            case 0: bleSpamBasic(); break;
-            case 1: bleSpamiBeacon(); break;
-            case 2: bleSpamEddystone(); break;
-            case 3: bleSpamEddystone(); break;
-            case 4: bleSpamFast(); break;
-            default: bleSpamBasic(); break;
+    if (bleSpamPkts == 0 || currentTime - beacon.time >= 100) {
+        BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
+        BLEAdvertisementData advData;
+        
+        const char* bleNames[] = {
+            "AirPods", "AirPods Pro", "AirPods Max",
+            "Galaxy Buds", "Galaxy Buds+", "Galaxy Buds Pro",
+            "Pixel Buds", "Bose QC", "Sony WF",
+            "Smart Tag", "SmartTag+", "Galaxy Tag",
+            "Apple Watch", "Galaxy Watch", "Fitbit",
+            "Tile", "Tile Pro", "AirTag",
+            "iPhone", "Samsung Phone", "Pixel Phone"
+        };
+        
+        int nameIdx = random(0, 20);
+        advData.setName(bleNames[nameIdx]);
+        
+        std::string mfgData;
+        for (int i = 0; i < 8; i++) {
+            mfgData += (char)random(256);
         }
+        advData.setManufacturerData(mfgData);
+        
+        pAdvertising->stop();
+        pAdvertising->setAdvertisementData(advData);
+        pAdvertising->start();
+        
         beacon.time = currentTime;
         bleSpamPkts++;
     }
-#endif
-}
-
-void Attack::bleSpamBasic() {
-#ifdef ESP32
-    BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
-    BLEAdvertisementData advData;
-    
-    const char* bleNames[] = {
-        "AirPods", "AirPods Pro", "AirPods Max", "AirPods Gen3",
-        "Galaxy Buds", "Galaxy Buds+", "Galaxy Buds Pro", "Galaxy Buds2",
-        "Galaxy Buds Live", "Galaxy Buds Pro2",
-        "Pixel Buds", "Pixel Buds Pro",
-        "Bose QC Earbuds", "Bose QC45", "Bose Sport Earbuds",
-        "Sony WF-1000XM4", "Sony WF-1000XM5", "Sony WH-1000XM4", "Sony WH-1000XM5",
-        "Jabra Elite 75t", "Jabra Elite 85t", "Jabra Elite 7 Pro",
-        "Samsung Buds", "Samsung Buds Live", "Samsung Buds Pro",
-        "Anker Soundcore", "Anker Liberty", "SoundPEATS",
-        "Xiaomi Earbuds", "Xiaomi FlipBuds",
-        "OnePlus Buds", "OnePlus Buds Pro", "Oppo Enco",
-        "Vivo TWS", "Realme Buds Air",
-        "Smart Tag", "SmartTag+", "Galaxy Tag", "Apple AirTag",
-        "Tile Pro", "Tile Mate", "Tile Slim",
-        "Apple Watch", "Apple Watch Series", "Apple Watch Ultra",
-        "Galaxy Watch", "Galaxy Watch4", "Galaxy Watch5", "Galaxy Watch6",
-        "Fitbit", "Fitbit Charge", "Fitbit Versa",
-        "Garmin", "Garmin Venu", "Garmin Forerunner",
-        "Oura Ring", "Whoop", "Withings",
-        "iPhone", "iPhone Pro", "iPhone Max",
-        "Samsung Phone", "Pixel Phone", "OnePlus", "Xiaomi Phone",
-        "MacBook Pro", "MacBook Air", "iPad Pro",
-        "Surface Pro", "ThinkPad", "Dell XPS",
-        "Tesla Model", "Tesla Key", "Car Key",
-        "Nintendo Switch", "Steam Deck", "PS5 Controller",
-        "Galaxy Tab", "iPad", "Surface"
-    };
-    
-    int nameCount = 66;
-    int nameIdx = random(0, nameCount);
-    
-    advData.setName(bleNames[nameIdx]);
-    
-    std::string mfgData;
-    mfgData += (char)0x4C;
-    mfgData += (char)0x00;
-    mfgData += (char)0x02;
-    mfgData += (char)0x15;
-    for (int i = 0; i < 6; i++) {
-        mfgData += (char)random(256);
-    }
-    mfgData += (char)random(256);
-    mfgData += (char)random(256);
-    
-    advData.setManufacturerData(mfgData);
-    
-    pAdvertising->stop();
-    pAdvertising->setAdvertisementData(advData);
-    pAdvertising->setMinInterval(0x20);
-    pAdvertising->setMaxInterval(0x40);
-    pAdvertising->start();
-#endif
-}
-
-void Attack::bleSpamiBeacon() {
-#ifdef ESP32
-    BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
-    BLEAdvertisementData advData;
-    
-    std::string mfgData;
-    mfgData += (char)0x4C;
-    mfgData += (char)0x00;
-    mfgData += (char)0x02;
-    mfgData += (char)0x15;
-    
-    String uuid = bleSpamUUID;
-    uuid.replace("-", "");
-    for (int i = 0; i < uuid.length(); i += 2) {
-        String byteStr = uuid.substring(i, i + 2);
-        mfgData += (char)strtol(byteStr.c_str(), NULL, 16);
-    }
-    
-    mfgData += (char)((bleSpamMajor >> 8) & 0xFF);
-    mfgData += (char)(bleSpamMajor & 0xFF);
-    mfgData += (char)((bleSpamMinor >> 8) & 0xFF);
-    mfgData += (char)(bleSpamMinor & 0xFF);
-    
-    mfgData += (char)(uint8_t)bleSpamTXPower;
-    
-    advData.setManufacturerData(mfgData);
-    advData.setName("iBeacon");
-    
-    pAdvertising->stop();
-    pAdvertising->setAdvertisementData(advData);
-    pAdvertising->setMinInterval(0x20);
-    pAdvertising->setMaxInterval(0x40);
-    pAdvertising->start();
-    
-    bleSpamMinor++;
-    if (bleSpamMinor >= 65535) {
-        bleSpamMinor = 0;
-        bleSpamMajor++;
-        if (bleSpamMajor >= 65535) bleSpamMajor = 0;
-    }
-#endif
-}
-
-void Attack::bleSpamEddystone() {
-#ifdef ESP32
-    BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
-    BLEAdvertisementData advData;
-    
-    if (bleSpamEddyType == 3) {
-        std::string serviceData;
-        serviceData += (char)0xAA;
-        serviceData += (char)0xFE;
-        serviceData += (char)0x10;
-        
-        uint8_t txPower = (uint8_t)(int8_t)bleSpamTXPower;
-        serviceData += (char)txPower;
-        
-        String url = bleSpamEddyURL;
-        url.replace("https://", "");
-        url.replace("http://", "");
-        
-        uint8_t encoded[30];
-        int encLen = 0;
-        
-        const char* prefix = url.c_str();
-        if (url.startsWith("https://")) {
-            encoded[encLen++] = 0x00;
-        } else {
-            encoded[encLen++] = 0x01;
-        }
-        
-        url = url.substring(url.indexOf("//") + 2);
-        
-        for (int i = 0; i < url.length() && encLen < 29; i++) {
-            char c = url.charAt(i);
-            if (c == '.') {
-                if (url.substring(i).endsWith(".com/")) {
-                    encoded[encLen++] = 0x07;
-                } else if (url.substring(i).startsWith(".com")) {
-                    encoded[encLen++] = 0x08;
-                } else if (url.substring(i).startsWith(".org")) {
-                    encoded[encLen++] = 0x09;
-                } else if (url.substring(i).startsWith(".edu")) {
-                    encoded[encLen++] = 0x0A;
-                } else if (url.substring(i).startsWith(".net")) {
-                    encoded[encLen++] = 0x0B;
-                } else if (url.substring(i).startsWith(".info")) {
-                    encoded[encLen++] = 0x0C;
-                } else {
-                    encoded[encLen++] = 0x02;
-                }
-            } else if (c == '/') {
-                encoded[encLen++] = 0xFF;
-                break;
-            } else {
-                encoded[encLen++] = c;
-            }
-        }
-        
-        for (int i = 0; i < encLen; i++) {
-            serviceData += (char)encoded[i];
-        }
-        
-        advData.setServiceData(BLEUUID("FEAA"), serviceData);
-        advData.setName("Eddystone-URL");
-    } else {
-        std::string serviceData;
-        serviceData += (char)0xAA;
-        serviceData += (char)0xFE;
-        serviceData += (char)0x00;
-        
-        uint8_t txPower = (uint8_t)(int8_t)bleSpamTXPower;
-        serviceData += (char)txPower;
-        serviceData += (char)0x00;
-        
-        for (int i = 0; i < 10; i++) {
-            serviceData += (char)random(256);
-        }
-        
-        advData.setServiceData(BLEUUID("FEAA"), serviceData);
-        advData.setName("Eddystone-UID");
-    }
-    
-    pAdvertising->stop();
-    pAdvertising->setAdvertisementData(advData);
-    pAdvertising->setMinInterval(0x20);
-    pAdvertising->setMaxInterval(0x40);
-    pAdvertising->start();
-#endif
-}
-
-void Attack::bleSpamFast() {
-#ifdef ESP32
-    BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
-    BLEAdvertisementData advData;
-    
-    const char* bleNames[] = {
-        "AirPods", "Galaxy Buds", "Pixel Buds", "AirTag", "Galaxy Tag",
-        "Apple Watch", "Galaxy Watch", "iPhone", "Tesla Key", "Car Key",
-        "Tile", "Smart Tag", "PS5", "Nintendo", "Steam Deck"
-    };
-    
-    int nameIdx = random(0, 15);
-    advData.setName(bleNames[nameIdx]);
-    
-    std::string mfgData;
-    for (int i = 0; i < 20; i++) {
-        mfgData += (char)random(256);
-    }
-    advData.setManufacturerData(mfgData);
-    
-    pAdvertising->stop();
-    pAdvertising->setAdvertisementData(advData);
-    pAdvertising->setMinInterval(0x04);
-    pAdvertising->setMaxInterval(0x08);
-    pAdvertising->start();
 #endif
 }
 

@@ -84,17 +84,16 @@ void setup() {
     // Force reset to default SSID/Password
     settings::reset();
     // Set explicitly in case reset didn't work
-    access_point_settings_t apSet = settings::getAccessPointSettings();
+    ap_settings_t apSet = settings::getAccessPointSettings();
     strncpy(apSet.ssid, "GMpro", 32);
     strncpy(apSet.password, "Sangkur87", 64);
     apSet.hidden = false;
     settings::setAccessPointSettings(apSet);
     
-    // Use embedded web files (NOT SPIFFS)
-    web_settings_t ws = settings::getWebSettings();
-    ws.use_spiffs = false;
-    ws.enabled = true;
-    settings::setWebSettings(ws);
+    // Enable SPIFFS mode for web files
+    web_settings_t webSet = settings::getWebSettings();
+    webSet.use_spiffs = true;
+    settings::setWebSettings(webSet);
     
     settings::save();
     Serial.print("[3] SSID: ");
@@ -144,6 +143,11 @@ void setup() {
     }
 
     Serial.println("[6] Starting AP...");
+    
+    // FORCE enable web settings (in case EEPROM has old/corrupt settings)
+    web_settings_t webSet = settings::getWebSettings();
+    webSet.enabled = true;
+    settings::setWebSettings(webSet);
     
     wifi::startAP();
     Serial.println("[6] AP started!");
