@@ -374,19 +374,12 @@ namespace wifi {
         if (!settings::getWebSettings().use_spiffs) {
             // Check for custom index.html in SPIFFS first
             server.on("/", HTTP_GET, []() {
-                // Always try SPIFFS first for custom web UI
-                if (FILE_SYSTEM.exists("/web/index.html")) {
-                    handleFileRead("/web/index.html");
-                } else {
-                    sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);
-                }
+                // Use PROGMEM directly, skip SPIFFS
+                sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);
             });
             server.on("/index.html", HTTP_GET, []() {
-                if (FILE_SYSTEM.exists("/web/index.html")) {
-                    handleFileRead("/web/index.html");
-                } else {
-                    sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);
-                }
+                // Use PROGMEM directly, skip SPIFFS
+                sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);
             });
             server.on("/scan.html", HTTP_GET, []() {
                 sendProgmem(scanhtml, sizeof(scanhtml), W_HTML);
