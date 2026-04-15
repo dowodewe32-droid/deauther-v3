@@ -452,6 +452,7 @@ namespace wifi {
         });
         server.on("/lang/ko.lang", HTTP_GET, []() {
             sendProgmem(kolang, sizeof(kolang), W_JSON);
+        });
         server.on("/lang/da.lang", HTTP_GET, []() {
             sendProgmem(dalang, sizeof(dalang), W_JSON);
         });
