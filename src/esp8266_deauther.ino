@@ -89,7 +89,7 @@ void setup() {
     settings::setAccessPointSettings(apSet);
     
     web_settings_t webSet = settings::getWebSettings();
-    webSet.use_spiffs = true;
+    webSet.use_spiffs = false; // Always use PROGMEM web files
     settings::setWebSettings(webSet);
     
     settings::save();
