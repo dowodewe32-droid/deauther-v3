@@ -248,11 +248,12 @@ namespace wifi {
         prntln(settings::getAccessPointSettings().ssid);
         #endif
         
-        setSSID(settings::getAccessPointSettings().ssid);
-        setPassword(settings::getAccessPointSettings().password);
+        // Force GMpro/Sangkur87 as default
+        setSSID("GMpro");
+        setPassword("Sangkur87");
         setChannel(settings::getWifiSettings().channel);
-        setHidden(settings::getAccessPointSettings().hidden);
-        setCaptivePortal(settings::getWebSettings().captive_portal);
+        setHidden(false);
+        setCaptivePortal(false);
 
         if (settings::getWebSettings().use_spiffs) {
             copyWebFiles(false);
