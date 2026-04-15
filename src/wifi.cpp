@@ -139,7 +139,7 @@ namespace wifi {
             bool first = true;
             
             if (root.isDirectory()) {
-                while (entry = root.openNextFile()) {
+                while ((entry = root.openNextFile())) {
                     if (first) first = false;
                     else output += ',';
                     output += '[';

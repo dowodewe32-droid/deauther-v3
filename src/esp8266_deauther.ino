@@ -104,13 +104,6 @@ void setup() {
     Serial.println("[4] OK");
 
 #ifdef ESP32
-#else
-    wifi_set_promiscuous_rx_cb([](uint8_t* buf, uint16_t len) {
-        scan.sniffer(buf, len);
-    });
-#endif
-
-#ifdef ESP32
     // Don't set promiscuous here - let scan.setup() handle it
 #else
     wifi_set_promiscuous_rx_cb([](uint8_t* buf, uint16_t len) {
