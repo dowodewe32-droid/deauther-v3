@@ -371,141 +371,128 @@ namespace wifi {
         #ifdef USE_PROGMEM_WEB_FILES
         // ================================================================
         // paste here the output of the webConverter.py
-        if (!settings::getWebSettings().use_spiffs) {
-            // Check for custom index.html in SPIFFS first
-            server.on("/", HTTP_GET, []() {
-                // Use PROGMEM directly, skip SPIFFS
-                sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);
-            });
-            server.on("/index.html", HTTP_GET, []() {
-                // Use PROGMEM directly, skip SPIFFS
-                sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);
-            });
-            server.on("/scan.html", HTTP_GET, []() {
-                sendProgmem(scanhtml, sizeof(scanhtml), W_HTML);
-            });
-            server.on("/info.html", HTTP_GET, []() {
-                sendProgmem(infohtml, sizeof(infohtml), W_HTML);
-            });
-            server.on("/ssids.html", HTTP_GET, []() {
-                sendProgmem(ssidshtml, sizeof(ssidshtml), W_HTML);
-            });
-            server.on("/attack.html", HTTP_GET, []() {
-                sendProgmem(attackhtml, sizeof(attackhtml), W_HTML);
-            });
-            server.on("/settings.html", HTTP_GET, []() {
-                sendProgmem(settingshtml, sizeof(settingshtml), W_HTML);
-            });
-            server.on("/style.css", HTTP_GET, []() {
-                sendProgmem(stylecss, sizeof(stylecss), W_CSS);
-            });
-            server.on("/js/ssids.js", HTTP_GET, []() {
-                sendProgmem(ssidsjs, sizeof(ssidsjs), W_JS);
-            });
-            server.on("/js/site.js", HTTP_GET, []() {
-                sendProgmem(sitejs, sizeof(sitejs), W_JS);
-            });
-            server.on("/js/attack.js", HTTP_GET, []() {
-                sendProgmem(attackjs, sizeof(attackjs), W_JS);
-            });
-            server.on("/js/scan.js", HTTP_GET, []() {
-                sendProgmem(scanjs, sizeof(scanjs), W_JS);
-            });
-            server.on("/js/settings.js", HTTP_GET, []() {
-                sendProgmem(settingsjs, sizeof(settingsjs), W_JS);
-            });
-            server.on("/lang/hu.lang", HTTP_GET, []() {
-                sendProgmem(hulang, sizeof(hulang), W_JSON);
-            });
-            server.on("/lang/ja.lang", HTTP_GET, []() {
-                sendProgmem(jalang, sizeof(jalang), W_JSON);
-            });
-            server.on("/lang/nl.lang", HTTP_GET, []() {
-                sendProgmem(nllang, sizeof(nllang), W_JSON);
-            });
-            server.on("/lang/fi.lang", HTTP_GET, []() {
-                sendProgmem(filang, sizeof(filang), W_JSON);
-            });
-            server.on("/lang/cn.lang", HTTP_GET, []() {
-                sendProgmem(cnlang, sizeof(cnlang), W_JSON);
-            });
-            server.on("/lang/ru.lang", HTTP_GET, []() {
-                sendProgmem(rulang, sizeof(rulang), W_JSON);
-            });
-            server.on("/lang/pl.lang", HTTP_GET, []() {
-                sendProgmem(pllang, sizeof(pllang), W_JSON);
-            });
-            server.on("/lang/uk.lang", HTTP_GET, []() {
-                sendProgmem(uklang, sizeof(uklang), W_JSON);
-            });
-            server.on("/lang/de.lang", HTTP_GET, []() {
-                sendProgmem(delang, sizeof(delang), W_JSON);
-            });
-            server.on("/lang/it.lang", HTTP_GET, []() {
-                sendProgmem(itlang, sizeof(itlang), W_JSON);
-            });
-            server.on("/lang/en.lang", HTTP_GET, []() {
-                sendProgmem(enlang, sizeof(enlang), W_JSON);
-            });
-            server.on("/lang/fr.lang", HTTP_GET, []() {
-                sendProgmem(frlang, sizeof(frlang), W_JSON);
-            });
-            server.on("/lang/in.lang", HTTP_GET, []() {
-                sendProgmem(inlang, sizeof(inlang), W_JSON);
-            });
-            server.on("/lang/ko.lang", HTTP_GET, []() {
-                sendProgmem(kolang, sizeof(kolang), W_JSON);
-            });
-            server.on("/lang/ro.lang", HTTP_GET, []() {
-                sendProgmem(rolang, sizeof(rolang), W_JSON);
-            });
-            server.on("/lang/da.lang", HTTP_GET, []() {
-                sendProgmem(dalang, sizeof(dalang), W_JSON);
-            });
-            server.on("/lang/ptbr.lang", HTTP_GET, []() {
-                sendProgmem(ptbrlang, sizeof(ptbrlang), W_JSON);
-            });
-            server.on("/lang/cs.lang", HTTP_GET, []() {
-                sendProgmem(cslang, sizeof(cslang), W_JSON);
-            });
-            server.on("/lang/tlh.lang", HTTP_GET, []() {
-                sendProgmem(tlhlang, sizeof(tlhlang), W_JSON);
-            });
-            server.on("/lang/es.lang", HTTP_GET, []() {
-                sendProgmem(eslang, sizeof(eslang), W_JSON);
-            });
-            server.on("/lang/th.lang", HTTP_GET, []() {
-                sendProgmem(thlang, sizeof(thlang), W_JSON);
-            });
-        }
+        // Always use PROGMEM, ignore use_spiffs setting
+        server.on("/", HTTP_GET, []() {
+            sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);
+        });
+        server.on("/index.html", HTTP_GET, []() {
+            sendProgmem(indexhtml, sizeof(indexhtml), W_HTML);
+        });
+        server.on("/scan.html", HTTP_GET, []() {
+            sendProgmem(scanhtml, sizeof(scanhtml), W_HTML);
+        });
+        server.on("/info.html", HTTP_GET, []() {
+            sendProgmem(infohtml, sizeof(infohtml), W_HTML);
+        });
+        server.on("/ssids.html", HTTP_GET, []() {
+            sendProgmem(ssidshtml, sizeof(ssidshtml), W_HTML);
+        });
+        server.on("/attack.html", HTTP_GET, []() {
+            sendProgmem(attackhtml, sizeof(attackhtml), W_HTML);
+        });
+        server.on("/settings.html", HTTP_GET, []() {
+            sendProgmem(settingshtml, sizeof(settingshtml), W_HTML);
+        });
+        server.on("/style.css", HTTP_GET, []() {
+            sendProgmem(stylecss, sizeof(stylecss), W_CSS);
+        });
+        server.on("/js/ssids.js", HTTP_GET, []() {
+            sendProgmem(ssidsjs, sizeof(ssidsjs), W_JS);
+        });
+        server.on("/js/site.js", HTTP_GET, []() {
+            sendProgmem(sitejs, sizeof(sitejs), W_JS);
+        });
+        server.on("/js/attack.js", HTTP_GET, []() {
+            sendProgmem(attackjs, sizeof(attackjs), W_JS);
+        });
+        server.on("/js/scan.js", HTTP_GET, []() {
+            sendProgmem(scanjs, sizeof(scanjs), W_JS);
+        });
+        server.on("/js/settings.js", HTTP_GET, []() {
+            sendProgmem(settingsjs, sizeof(settingsjs), W_JS);
+        });
+        server.on("/lang/hu.lang", HTTP_GET, []() {
+            sendProgmem(hulang, sizeof(hulang), W_JSON);
+        });
+        server.on("/lang/ja.lang", HTTP_GET, []() {
+            sendProgmem(jalang, sizeof(jalang), W_JSON);
+        });
+        server.on("/lang/nl.lang", HTTP_GET, []() {
+            sendProgmem(nllang, sizeof(nllang), W_JSON);
+        });
+        server.on("/lang/fi.lang", HTTP_GET, []() {
+            sendProgmem(filang, sizeof(filang), W_JSON);
+        });
+        server.on("/lang/cn.lang", HTTP_GET, []() {
+            sendProgmem(cnlang, sizeof(cnlang), W_JSON);
+        });
+        server.on("/lang/ru.lang", HTTP_GET, []() {
+            sendProgmem(rulang, sizeof(rulang), W_JSON);
+        });
+        server.on("/lang/pl.lang", HTTP_GET, []() {
+            sendProgmem(pllang, sizeof(pllang), W_JSON);
+        });
+        server.on("/lang/uk.lang", HTTP_GET, []() {
+            sendProgmem(uklang, sizeof(uklang), W_JSON);
+        });
+        server.on("/lang/de.lang", HTTP_GET, []() {
+            sendProgmem(delang, sizeof(delang), W_JSON);
+        });
+        server.on("/lang/it.lang", HTTP_GET, []() {
+            sendProgmem(itlang, sizeof(itlang), W_JSON);
+        });
+        server.on("/lang/en.lang", HTTP_GET, []() {
+            sendProgmem(enlang, sizeof(enlang), W_JSON);
+        });
+        server.on("/lang/fr.lang", HTTP_GET, []() {
+            sendProgmem(frlang, sizeof(frlang), W_JSON);
+        });
+        server.on("/lang/in.lang", HTTP_GET, []() {
+            sendProgmem(inlang, sizeof(inlang), W_JSON);
+        });
+        server.on("/lang/ko.lang", HTTP_GET, []() {
+            sendProgmem(kolang, sizeof(kolang), W_JSON);
+        server.on("/lang/da.lang", HTTP_GET, []() {
+            sendProgmem(dalang, sizeof(dalang), W_JSON);
+        });
+        server.on("/lang/ptbr.lang", HTTP_GET, []() {
+            sendProgmem(ptbrlang, sizeof(ptbrlang), W_JSON);
+        });
+        server.on("/lang/cs.lang", HTTP_GET, []() {
+            sendProgmem(cslang, sizeof(cslang), W_JSON);
+        });
+        server.on("/lang/tlh.lang", HTTP_GET, []() {
+            sendProgmem(tlhlang, sizeof(tlhlang), W_JSON);
+        });
+        server.on("/lang/es.lang", HTTP_GET, []() {
+            sendProgmem(eslang, sizeof(eslang), W_JSON);
+        });
+        server.on("/lang/th.lang", HTTP_GET, []() {
+            sendProgmem(thlang, sizeof(thlang), W_JSON);
+        });
         server.on("/lang/default.lang", HTTP_GET, []() {
-            if (!settings::getWebSettings().use_spiffs) {
-                if (String(settings::getWebSettings().lang) == "hu") sendProgmem(hulang, sizeof(hulang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "ja") sendProgmem(jalang, sizeof(jalang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "nl") sendProgmem(nllang, sizeof(nllang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "fi") sendProgmem(filang, sizeof(filang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "cn") sendProgmem(cnlang, sizeof(cnlang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "ru") sendProgmem(rulang, sizeof(rulang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "pl") sendProgmem(pllang, sizeof(pllang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "uk") sendProgmem(uklang, sizeof(uklang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "de") sendProgmem(delang, sizeof(delang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "it") sendProgmem(itlang, sizeof(itlang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "en") sendProgmem(enlang, sizeof(enlang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "fr") sendProgmem(frlang, sizeof(frlang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "in") sendProgmem(inlang, sizeof(inlang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "ko") sendProgmem(kolang, sizeof(kolang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "ro") sendProgmem(rolang, sizeof(rolang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "da") sendProgmem(dalang, sizeof(dalang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "ptbr") sendProgmem(ptbrlang, sizeof(ptbrlang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "cs") sendProgmem(cslang, sizeof(cslang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "tlh") sendProgmem(tlhlang, sizeof(tlhlang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "es") sendProgmem(eslang, sizeof(eslang), W_JSON);
-                else if (String(settings::getWebSettings().lang) == "th") sendProgmem(thlang, sizeof(thlang), W_JSON);
-
-                else handleFileRead("/web/lang/"+String(settings::getWebSettings().lang)+".lang");
-            } else {
-                handleFileRead("/web/lang/"+String(settings::getWebSettings().lang)+".lang");
-            }
+            if (String(settings::getWebSettings().lang) == "hu") sendProgmem(hulang, sizeof(hulang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "ja") sendProgmem(jalang, sizeof(jalang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "nl") sendProgmem(nllang, sizeof(nllang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "fi") sendProgmem(filang, sizeof(filang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "cn") sendProgmem(cnlang, sizeof(cnlang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "ru") sendProgmem(rulang, sizeof(rulang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "pl") sendProgmem(pllang, sizeof(pllang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "uk") sendProgmem(uklang, sizeof(uklang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "de") sendProgmem(delang, sizeof(delang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "it") sendProgmem(itlang, sizeof(itlang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "en") sendProgmem(enlang, sizeof(enlang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "fr") sendProgmem(frlang, sizeof(frlang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "in") sendProgmem(inlang, sizeof(inlang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "ko") sendProgmem(kolang, sizeof(kolang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "ro") sendProgmem(rolang, sizeof(rolang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "da") sendProgmem(dalang, sizeof(dalang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "ptbr") sendProgmem(ptbrlang, sizeof(ptbrlang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "cs") sendProgmem(cslang, sizeof(cslang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "tlh") sendProgmem(tlhlang, sizeof(tlhlang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "es") sendProgmem(eslang, sizeof(eslang), W_JSON);
+            else if (String(settings::getWebSettings().lang) == "th") sendProgmem(thlang, sizeof(thlang), W_JSON);
+            else sendProgmem(enlang, sizeof(enlang), W_JSON);
         });
         // ================================================================
         #endif /* ifdef USE_PROGMEM_WEB_FILES */
