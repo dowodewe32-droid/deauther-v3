@@ -90,9 +90,9 @@ void setup() {
     apSet.hidden = false;
     settings::setAccessPointSettings(apSet);
     
-    // Enable SPIFFS mode for web files
+    // Use embedded web files (NOT SPIFFS)
     web_settings_t ws = settings::getWebSettings();
-    ws.use_spiffs = true;
+    ws.use_spiffs = false;
     ws.enabled = true;
     settings::setWebSettings(ws);
     
