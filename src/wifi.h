@@ -6,6 +6,7 @@
 
 namespace wifi {
     void begin();
+    void reloadSettings();
 
     String getMode();
     void printStatus();

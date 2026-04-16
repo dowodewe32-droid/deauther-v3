@@ -101,6 +101,7 @@ void setup() {
 
     Serial.println("[4] WiFi...");
     wifi::begin();
+    wifi::reloadSettings(); // Reload SSID/password after settings are updated
     Serial.println("[4] OK");
 
 #ifdef ESP32

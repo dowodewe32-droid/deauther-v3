@@ -272,6 +272,18 @@ namespace wifi {
         #endif
     }
 
+    void reloadSettings() {
+        setSSID(settings::getAccessPointSettings().ssid);
+        setPassword(settings::getAccessPointSettings().password);
+        setChannel(settings::getWifiSettings().channel);
+        setHidden(settings::getAccessPointSettings().hidden);
+        setCaptivePortal(settings::getWebSettings().captive_portal);
+        #ifdef ESP32
+        prnt("[WIFI] Reloaded SSID: ");
+        prntln(ap_settings.ssid);
+        #endif
+    }
+
     String getMode() {
         #ifdef ESP32
         switch (mode) {
