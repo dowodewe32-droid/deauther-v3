@@ -1,5 +1,5 @@
-// Simple test firmware - just starts AP with GMpro/Sangkur87
-// Based on TESA original style
+// Simple test firmware - just starts AP
+// Use this to test if AP appears with correct SSID/password
 
 #include <WiFi.h>
 #include <WebServer.h>
@@ -22,7 +22,7 @@ void handleRoot() {
 
 void setup() {
   Serial.begin(115200);
-  delay(500);
+  delay(1000);
   Serial.println();
   Serial.println("========================================");
   Serial.println("GMpro87dev Simple Test Firmware");
@@ -48,6 +48,7 @@ void setup() {
   server.begin();
   
   Serial.println("Web server started!");
+  Serial.println("Connect to SSID: GMpro, Password: Sangkur87");
   Serial.println("========================================");
 }
 
