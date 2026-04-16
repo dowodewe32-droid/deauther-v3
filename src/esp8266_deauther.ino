@@ -90,9 +90,9 @@ void setup() {
     apSet.hidden = false;
     settings::setAccessPointSettings(apSet);
     
-    // Enable SPIFFS mode for web files
+    // Use PROGMEM for web files (not SPIFFS)
     web_settings_t webSet = settings::getWebSettings();
-    webSet.use_spiffs = true;
+    webSet.use_spiffs = false;
     settings::setWebSettings(webSet);
     
     settings::save();
