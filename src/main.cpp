@@ -5,7 +5,6 @@
 #include "web_interface.h"
 #include "deauth.h"
 #include "beacon.h"
-#include "ble.h"
 #include "definitions.h"
 
 DNSServer dnsServer;

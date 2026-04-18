@@ -8,8 +8,6 @@
 extern void start_beacon();
 extern void stop_beacon();
 extern bool is_beacon_running();
-extern void start_ble_scan();
-extern String get_ble_results();
 
 WebServer server(80);
 extern int eliminated_stations;
@@ -44,7 +42,7 @@ th{color:#a78bfa}
 </style>
 </head>
 <body>
-<div class="header"><h1>GMpro87dev</h1><p>Full Features: Deauth + Beacon + BLE</p></div>
+<div class="header"><h1>GMpro87dev</h1><p>Full Features: Deauth + Beacon</p></div>
 
 <div class="card"><h2>WiFi Scanner</h2>
 <button class="btn btn-primary" onclick="scanWiFi()">Scan</button>
@@ -60,10 +58,6 @@ th{color:#a78bfa}
 <button class="btn btn-primary" onclick="startBeacon()">Start</button>
 <button class="btn btn-danger" onclick="stopBeacon()">Stop</button></div>
 
-<div class="card"><h2>BLE Scanner</h2>
-<button class="btn btn-primary" onclick="scanBLE()">Scan BLE</button>
-<div id="bleResult" class="info">Tap scan</div></div>
-
 <script>
 function scanWiFi(){fetch('/scan').then(r=>r.json()).then(d=>{
   let t='<table><tr><th>#</th><th>SSID</th><th>Ch</th><th>RSSI</th></tr>';
@@ -75,11 +69,6 @@ function stopAttack(){fetch('/stop')}
 function startBeacon(){fetch('/beacon?cmd=start');document.getElementById('beaconStatus').className='status status-on';document.getElementById('beaconStatus').innerText='ON';setInterval(updateBeacon,1000)}
 function stopBeacon(){fetch('/beacon?cmd=stop');document.getElementById('beaconStatus').className='status';document.getElementById('beaconStatus').innerText='OFF'}
 function updateBeacon(){fetch('/beaconStatus').then(r=>r.json()).then(d=>document.getElementById('beaconCount').innerText=d.count)}
-function scanBLE(){document.getElementById('bleResult').innerText='Scanning...';fetch('/ble').then(r=>r.json()).then(d=>{
-  let t='<table><tr><th>Name</th><th>MAC</th></tr>';
-  d.forEach(dv=>t+='<tr><td>'+dv.name+'</td><td>'+dv.addr+'</td></tr>');
-  document.getElementById('bleResult').innerHTML=d.length+' devices'+t;
-})}
 setInterval(()=>fetch('/status').then(r=>r.json()).then(d=>document.getElementById('deauthCount').innerText=d.deauth),2000);
 </script>
 </body>
@@ -128,12 +117,6 @@ void handleBeaconStatus() {
   server.send(200, "application/json", "{\"running\":" + String(is_beacon_running() ? "true" : "false") + ",\"count\":" + beacon_counter + "}");
 }
 
-void handleBLE() {
-  start_ble_scan();
-  delay(BLE_SCAN_TIME * 1000);
-  server.send(200, "application/json", get_ble_results());
-}
-
 void handleStatus() {
   server.send(200, "application/json", "{\"deauth\":" + eliminated_stations + "}");
 }
@@ -145,7 +128,6 @@ void start_web_interface() {
   server.on("/stop", handleStop);
   server.on("/beacon", handleBeacon);
   server.on("/beaconStatus", handleBeaconStatus);
-  server.on("/ble", handleBLE);
   server.on("/status", handleStatus);
   server.begin();
   DEBUG_PRINTLN("Web Server Started");
