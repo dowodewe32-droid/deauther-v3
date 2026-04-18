@@ -1,16 +1,25 @@
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
+// ========== ACCESS POINT ==========
 #define AP_SSID "GMpro"
 #define AP_PASS "Sangkur87"
 #define LED 2
 #define SERIAL_DEBUG
+
+// ========== DEAUTH ==========
 #define CHANNEL_MAX 13
 #define NUM_FRAMES_PER_DEAUTH 16
 #define DEAUTH_BLINK_TIMES 2
 #define DEAUTH_BLINK_DURATION 20
 #define DEAUTH_TYPE_SINGLE 0
 #define DEAUTH_TYPE_ALL 1
+
+// ========== BEACON SPAM ==========
+#define BEACON_INTERVAL 100
+
+// ========== BLE ==========
+#define BLE_SCAN_TIME 5
 
 #ifdef SERIAL_DEBUG
 #define DEBUG_PRINT(...) Serial.print(__VA_ARGS__)
