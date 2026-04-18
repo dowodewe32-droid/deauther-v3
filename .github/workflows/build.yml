@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install platformio
+      - run: pip install platformio==5.3.0
       - run: pio run -e esp32doit-devkit-v1
       - uses: actions/upload-artifact@v4
         with:
