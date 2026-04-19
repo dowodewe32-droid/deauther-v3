@@ -15,7 +15,7 @@ extern bool beacon_active;
 extern int beacon_counter;
 
 void handleRoot() {
-  String html = R"(
+  String html = R"===(
 <!DOCTYPE html>
 <html>
 <head>
@@ -73,7 +73,7 @@ setInterval(()=>fetch('/status').then(r=>r.json()).then(d=>document.getElementBy
 </script>
 </body>
 </html>
-  )";
+===)";
   server.send(200, "text/html", html);
 }
 
