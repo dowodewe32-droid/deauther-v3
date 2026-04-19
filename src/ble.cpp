@@ -1,4 +1,4 @@
-// BLE placeholder - not implemented yet
+#include <Arduino.h>
 #include "ble.h"
 #include "definitions.h"
 

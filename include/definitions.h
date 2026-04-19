@@ -1,6 +1,8 @@
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
+#include <Arduino.h>
+
 // ========== ACCESS POINT ==========
 #define AP_SSID "GMpro"
 #define AP_PASS "Sangkur87"
