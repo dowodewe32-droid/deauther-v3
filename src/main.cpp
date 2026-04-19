@@ -6,14 +6,14 @@
 #include "deauth.h"
 #include "beacon.h"
 #include "definitions.h"
+#include "evil_twin.h"
+#include "ble.h"
+#include "whitelist.h"
+#include "auth.h"
 
 DNSServer dnsServer;
 const byte DNS_PORT = 53;
 int curr_channel = 1;
-
-extern int eliminated_stations;
-extern bool beacon_active;
-extern int beacon_counter;
 
 void setup() {
   Serial.begin(115200);
@@ -22,16 +22,18 @@ void setup() {
   Serial.println("GMpro87dev - Full Features");
   Serial.print("SSID: ");
   Serial.println(AP_SSID);
+  Serial.print("Password: ");
+  Serial.println(AP_PASS);
   Serial.println("========================");
   
   pinMode(LED, OUTPUT);
   digitalWrite(LED, HIGH);
-
+  
   WiFi.mode(WIFI_MODE_AP);
   WiFi.softAP(AP_SSID, AP_PASS);
   Serial.print("AP IP: ");
   Serial.println(WiFi.softAPIP());
-
+  
   dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
   start_web_interface();
   WiFi.scanNetworks(true);
