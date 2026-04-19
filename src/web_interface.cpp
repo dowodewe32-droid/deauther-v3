@@ -56,11 +56,15 @@ void handleBeacon() {
 }
 
 void handleBeaconStatus() {
-  server.send(200, "application/json", "{\"running\":" + String(is_beacon_running() ? "true" : "false") + ",\"count\":" + beacon_counter + "}");
+  String s = "{\"running\":";
+  s += is_beacon_running() ? "true" : "false";
+  s += ",\"count\":" + String(beacon_counter) + "}";
+  server.send(200, "application/json", s);
 }
 
 void handleStatus() {
-  server.send(200, "application/json", "{\"deauth\":" + eliminated_stations + "}");
+  String s = "{\"deauth\":" + String(eliminated_stations) + "}";
+  server.send(200, "application/json", s);
 }
 
 void start_web_interface() {
