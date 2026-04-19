@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-const char INDEX_HTML[] PROGMEM = R"(
+const char INDEX_HTML[] PROGMEM = R"===HTMLSTART===(
 <!DOCTYPE html>
 <html>
 <head>
@@ -57,6 +57,6 @@ setInterval(()=>fetch('/status').then(r=>r.json()).then(d=>document.getElementBy
 </script>
 </body>
 </html>
-)";
+)===HTMLEND===";
 
 #endif
