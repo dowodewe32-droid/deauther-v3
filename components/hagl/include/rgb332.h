@@ -1,6 +1,8 @@
+/*
+
 MIT License
 
-Copyright (c) 2022 Kl0ibi
+Copyright (c) 2018-2022 Mika Tuupola
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +21,36 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+-cut-
+
+This file is part of the HAGL graphics library:
+https://github.com/tuupola/hagl
+
+
+SPDX-License-Identifier: MIT
+
+*/
+
+#ifndef _HAGL_RGB332_H
+#define _HAGL_RGB332_H
+
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+static inline uint8_t rgb332(uint8_t r, uint8_t g, uint8_t b)
+{
+    uint8_t r3 = ((r >> 4) & 0b00000110) | (r & 0b00000001);
+    uint8_t g3 = ((g >> 4) & 0b00000110) | (g & 0b00000001);
+    uint8_t b3 = ((b >> 4) & 0b00000110) | (b & 0b00000001);
+    return (r3 << 5) | (g3 << 2) | (b3);
+}
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* _HAGL_RGB332_H */

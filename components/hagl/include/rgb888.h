@@ -1,6 +1,8 @@
+/*
+
 MIT License
 
-Copyright (c) 2022 Kl0ibi
+Copyright (c) 2018-2022 Mika Tuupola
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +21,51 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+-cut-
+
+This file is part of the HAGL graphics library:
+https://github.com/tuupola/hagl
+
+
+SPDX-License-Identifier: MIT
+
+*/
+
+#ifndef _RGB888_H
+#define _RGB888_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+typedef struct {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} rgb_t;
+
+#include "hsl.h"
+
+hsl_t rgb888_to_hsl(rgb_t *rgb);
+uint16_t rgb888_to_rgb565(rgb_t *input);
+
+static inline int min(int a, int b) {
+    if (a > b) {
+        return b;
+    };
+    return a;
+}
+
+static inline int max(int a, int b) {
+    if (a > b) {
+        return a;
+    }
+    return b;
+}
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* _RGB888_H */

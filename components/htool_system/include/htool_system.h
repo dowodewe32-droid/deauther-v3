@@ -1,6 +1,5 @@
-MIT License
-
-Copyright (c) 2022 Kl0ibi
+/*
+Copyright (c) 2023 kl0ibi
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +18,15 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+ */
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdio.h>
+
+void htool_system_memcpy_reverse(void *d, void *s, uint8_t size);
+
+char *htool_system_escape_quotes(char *string, uint32_t size);
+
+void htool_system_hex_string_to_byte_array(char *hex_string, uint8_t **byte_array, uint32_t *array_size);
+
+uint32_t htool_system_extract_number_from_string(const char *str, uint16_t factor);

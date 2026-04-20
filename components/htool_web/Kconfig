@@ -1,0 +1,5 @@
+config HTOOL_WEB
+    bool "Web Interface"
+    default y
+    help
+        Enable Web UI control interface

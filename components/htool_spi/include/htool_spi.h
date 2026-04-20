@@ -1,6 +1,5 @@
-MIT License
-
-Copyright (c) 2022 Kl0ibi
+/*
+Copyright (c) 2023 kl0ibi
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +18,14 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+ */
+#include <stdint.h>
+#include <stdbool.h>
+
+void htool_spi_master_ss(uint8_t level);
+
+void htool_spi_master_write(uint8_t data);
+
+uint8_t htool_spi_master_read();
+
+void htool_spi_master_init(uint8_t miso, uint8_t mosi, uint8_t sck, uint8_t ss);

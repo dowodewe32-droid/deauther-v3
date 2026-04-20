@@ -1,6 +1,5 @@
-MIT License
-
-Copyright (c) 2022 Kl0ibi
+/*
+Copyright (c) 2023 kl0ibi
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +18,34 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+ */
+#ifndef HTOOL_DISPLAY_H
+#define HTOOL_DISPLAY_H
+
+#include <stdbool.h>
+
+uint8_t menu_cnt = 0;
+
+bool scan_started = false;
+
+bool deauth_all = false;
+
+typedef enum {
+    ST_MENU = 0,
+    ST_SCAN,
+    ST_DEAUTH,
+    ST_BEACON,
+    ST_C_PORTAL,
+    ST_EVIL_TWIN,
+    ST_BLE_SPOOF,
+    ST_STARTUP,
+    ST_BEACON_SUBMENU,
+    ST_EVIL_TWIN_SUBMENU,
+    ST_BLE_SPOOF_SUBMENU1,
+    ST_BLE_SPOOF_SUBMENU2,
+} display_states;
+
+void htool_display_init();
+
+void htool_display_start();
+#endif

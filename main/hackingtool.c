@@ -1,6 +1,5 @@
-MIT License
-
-Copyright (c) 2022 Kl0ibi
+/*
+Copyright (c) 2023 kl0ibi
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +18,34 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+ */
+#include "sdkconfig.h"
+#include <stdio.h>
+#include "esp_event.h"
+#include "esp_partition.h"
+#include "htool_api.h"
+#include "htool_netman.h"
+#include "htool_web.h"
+
+
+
+
+static void initialize_esp_modules() {
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    ESP_ERROR_CHECK(esp_netif_init());
+}
+
+void app_main(void) {
+    printf("Start HackingTool\r\n");
+    initialize_esp_modules();
+
+    htool_netman_do_nothing(); // fix linker error
+
+    htool_api_init();
+
+    htool_web_init();
+
+    htool_api_start();
+
+    printf("HackingTool Startup completed\r\n");
+}
