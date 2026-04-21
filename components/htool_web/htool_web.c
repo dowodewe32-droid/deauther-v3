@@ -2,9 +2,13 @@
 #include <string.h>
 #include "esp_http_server.h"
 #include "esp_wifi.h"
+#include "esp_netif.h"
 #include "htool_web.h"
 #include "htool_api.h"
 #include "htool_wifi.h"
+
+#define AP_SSID "GMpro"
+#define AP_PASS "Sangkur87"
 
 static httpd_handle_t server = NULL;
 
@@ -126,6 +130,19 @@ static esp_err_t status_handler(httpd_req_t *req) {
 }
 
 void htool_web_init() {
+    // Start WiFi AP first
+    wifi_config_t wifi_config = {0};
+    strcpy((char *)wifi_config.ap.ssid, AP_SSID);
+    strcpy((char *)wifi_config.ap.password, AP_PASS);
+    wifi_config.ap.ssid_len = strlen(AP_SSID);
+    wifi_config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
+    wifi_config.ap.max_connection = 4;
+    
+    esp_wifi_set_mode(WIFI_MODE_AP);
+    esp_wifi_set_config(WIFI_IF_AP, &wifi_config);
+    esp_wifi_start();
+    
+    // Start HTTP server
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.server_port = 80;
 
