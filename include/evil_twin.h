@@ -8,6 +8,7 @@ void start_evil_twin(int target_network, const String& fake_ssid, const String& 
 void stop_evil_twin();
 void handle_captive_portal();
 void handle_login();
+void handle_evil_twin_client();
 bool is_evil_twin_active();
 bool validate_password(const String& ssid, const String& password);
 extern int captured_credentials_count;

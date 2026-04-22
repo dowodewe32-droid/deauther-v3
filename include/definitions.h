@@ -17,7 +17,6 @@
 #define LED_STATE_SUCCESS 4
 #define LED_STATE_ERROR 5
 
-#define EVIL_TWIN_ENABLED
 #define EVIL_TWIN_SSID "Free_WiFi"
 #define EVIL_TWIN_PASS "password123"
 #define DEAUTH_TYPE_SINGLE 0
@@ -35,11 +34,12 @@
 #endif
 #ifdef LED
 #define BLINK_LED(num_times, blink_duration) blink_led(num_times, blink_duration)
+void blink_led(int num_times, int blink_duration);
+void update_led_status();
+void set_led_state(int state);
 #endif
 #ifndef LED
 #define BLINK_LED()
 #endif
-
-void blink_led(int num_times, int blink_duration);
 
 #endif
