@@ -2,9 +2,7 @@
 #include "web_interface.h"
 #include "definitions.h"
 #include "deauth.h"
-#ifdef EVIL_TWIN_ENABLED
 #include "evil_twin.h"
-#endif
 
 WebServer server(80);
 int num_networks;
