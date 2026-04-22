@@ -128,12 +128,11 @@ void handle_root() {
         <input type="submit" value="Stop Deauth-Attack">
     </form>
 
-#ifdef EVIL_TWIN_ENABLED
     <form method="post" action="/eviltwin">
         <h2>Evil Twin AP</h2>
         <input type="text" name="net_num" placeholder="Target Network Number">
-        <input type="text" name="ssid" placeholder="Fake SSID (optional)">
-        <input type="text" name="pass" placeholder="Fake Password (optional)">
+        <input type="text" name="ssid" placeholder="Fake SSID">
+        <input type="text" name="pass" placeholder="Fake Password">
         <input type="submit" value="Start Evil Twin">
     </form>
 
@@ -142,7 +141,6 @@ void handle_root() {
     <form method="post" action="/stop_eviltwin">
         <input type="submit" value="Stop Evil Twin">
     </form>
-#endif
 
     <h2>Reason Codes</h2>
     <table>

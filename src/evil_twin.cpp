@@ -346,14 +346,3 @@ void stop_evil_twin() {
   Serial.println("=====================");
 #endif
 }
-
-bool is_evil_twin_active() {
-  return evil_twin_running;
-}
-
-void handle_evil_twin_client() {
-  if (evil_twin_running) {
-    dnsServer.processNextRequest();
-    etServer.handleClient();
-  }
-}
