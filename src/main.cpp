@@ -3,6 +3,7 @@
 #include "types.h"
 #include "web_interface.h"
 #include "deauth.h"
+#include "evil_twin.h"
 #include "definitions.h"
 
 int curr_channel = 1;
@@ -13,6 +14,7 @@ void setup() {
 #endif
 #ifdef LED
   pinMode(LED, OUTPUT);
+  digitalWrite(LED, LOW);
 #endif
 
   WiFi.mode(WIFI_MODE_AP);
@@ -22,7 +24,13 @@ void setup() {
 }
 
 void loop() {
-  if (deauth_type == DEAUTH_TYPE_ALL) {
+#ifdef LED
+  update_led_status();
+#endif
+
+  if (is_evil_twin_active()) {
+    handle_evil_twin_client();
+  } else if (deauth_type == DEAUTH_TYPE_ALL) {
     if (curr_channel > CHANNEL_MAX) curr_channel = 1;
     esp_wifi_set_channel(curr_channel, WIFI_SECOND_CHAN_NONE);
     curr_channel++;

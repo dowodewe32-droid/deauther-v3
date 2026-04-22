@@ -48,6 +48,10 @@ void start_deauth(int wifi_number, int attack_type, uint16_t reason) {
 
   deauth_frame.reason = reason;
 
+#ifdef LED
+  set_led_state(LED_STATE_ATTACKING);
+#endif
+
   if (deauth_type == DEAUTH_TYPE_SINGLE) {
     DEBUG_PRINT("Starting Deauth-Attack on network: ");
     DEBUG_PRINTLN(WiFi.SSID(wifi_number));
@@ -66,6 +70,9 @@ void start_deauth(int wifi_number, int attack_type, uint16_t reason) {
 }
 
 void stop_deauth() {
-  DEBUG_PRINTLN("Stopping Deauth-Attack..");
+  DEBUG_PRINTLN("Stopping Deuth-Attack..");
   esp_wifi_set_promiscuous(false);
+#ifdef LED
+  set_led_state(LED_STATE_SUCCESS);
+#endif
 }

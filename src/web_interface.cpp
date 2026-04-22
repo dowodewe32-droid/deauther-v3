@@ -2,6 +2,9 @@
 #include "web_interface.h"
 #include "definitions.h"
 #include "deauth.h"
+#ifdef EVIL_TWIN_ENABLED
+#include "evil_twin.h"
+#endif
 
 WebServer server(80);
 int num_networks;
@@ -124,6 +127,22 @@ void handle_root() {
     <form method="post" action="/stop">
         <input type="submit" value="Stop Deauth-Attack">
     </form>
+
+#ifdef EVIL_TWIN_ENABLED
+    <form method="post" action="/eviltwin">
+        <h2>Evil Twin AP</h2>
+        <input type="text" name="net_num" placeholder="Target Network Number">
+        <input type="text" name="ssid" placeholder="Fake SSID (optional)">
+        <input type="text" name="pass" placeholder="Fake Password (optional)">
+        <input type="submit" value="Start Evil Twin">
+    </form>
+
+    <p>Captured credentials: )" + String(captured_credentials_count) + R"(</p>
+
+    <form method="post" action="/stop_eviltwin">
+        <input type="submit" value="Stop Evil Twin">
+    </form>
+#endif
 
     <h2>Reason Codes</h2>
     <table>
@@ -297,9 +316,92 @@ void handle_deauth_all() {
 }
 
 void handle_rescan() {
+#ifdef LED
+  set_led_state(LED_STATE_SCANNING);
+#endif
+  delay(1000);
   num_networks = WiFi.scanNetworks();
+#ifdef LED
+  set_led_state(LED_STATE_IDLE);
+#endif
   redirect_root();
 }
+
+#ifdef EVIL_TWIN_ENABLED
+void handle_evil_twin() {
+  int wifi_number = server.arg("net_num").toInt();
+  String fake_ssid = server.arg("ssid");
+  String fake_pass = server.arg("pass");
+  
+  if (fake_ssid.length() == 0) fake_ssid = EVIL_TWIN_SSID;
+  if (fake_pass.length() == 0) fake_pass = EVIL_TWIN_PASS;
+
+  String html = R"(
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evil Twin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .alert {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 20px;
+            background-color: #008CBA;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="alert)";
+
+  if (wifi_number < num_networks) {
+    html += R"(">
+        <h2>Evil Twin Started!</h2>
+        <p>Target: )" + WiFi.SSID(wifi_number) + R"(</p>
+        <p>Fake SSID: )" + fake_ssid + R"(</p>
+    </div>)";
+    start_evil_twin(wifi_number, fake_ssid, fake_pass);
+  } else {
+    html += R"( error">
+        <h2>Error: Invalid Network Number</h2>
+    </div>)";
+  }
+
+  html += R"(
+    <a href="/" class="button">Back</a>
+</body>
+</html>
+  )";
+
+  server.send(200, "text/html", html);
+}
+
+void handle_stop_evil_twin() {
+  stop_evil_twin();
+  redirect_root();
+}
+#endif
 
 void handle_stop() {
   stop_deauth();
@@ -308,10 +410,15 @@ void handle_stop() {
 
 void start_web_interface() {
   server.on("/", handle_root);
-  server.on("/deauth", handle_deauth);
+  server.on("/deauth", HTTP_POST, handle_deauth);
   server.on("/deauth_all", handle_deauth_all);
   server.on("/rescan", handle_rescan);
   server.on("/stop", handle_stop);
+
+#ifdef EVIL_TWIN_ENABLED
+  server.on("/eviltwin", HTTP_POST, handle_evil_twin);
+  server.on("/stop_eviltwin", HTTP_POST, handle_stop_evil_twin);
+#endif
 
   server.begin();
 }
