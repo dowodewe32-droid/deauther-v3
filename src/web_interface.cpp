@@ -316,7 +316,17 @@ void handle_rescan() {
   set_led_state(LED_STATE_SCANNING);
 #endif
   delay(1000);
+  
+  bool wasAP = WiFi.getMode() & WIFI_AP;
+  
   num_networks = WiFi.scanNetworks();
+  
+  if (wasAP) {
+    delay(100);
+    WiFi.mode(WIFI_MODE_AP);
+    WiFi.softAP(AP_SSID, AP_PASS);
+  }
+  
 #ifdef LED
   set_led_state(LED_STATE_IDLE);
 #endif

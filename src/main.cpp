@@ -7,6 +7,7 @@
 #include "definitions.h"
 
 int curr_channel = 1;
+unsigned long lastAPCheck = 0;
 
 void setup() {
 #ifdef SERIAL_DEBUG
@@ -23,10 +24,23 @@ void setup() {
   start_web_interface();
 }
 
+void ensureAPMode() {
+  if (WiFi.getMode() != WIFI_MODE_AP && WiFi.getMode() != (WIFI_MODE_AP | WIFI_MODE_STA)) {
+    WiFi.mode(WIFI_MODE_AP);
+    WiFi.softAP(AP_SSID, AP_PASS);
+  }
+}
+
 void loop() {
 #ifdef LED
   update_led_status();
 #endif
+
+  unsigned long now = millis();
+  if (now - lastAPCheck > 5000) {
+    ensureAPMode();
+    lastAPCheck = now;
+  }
 
   if (is_evil_twin_active()) {
     handle_evil_twin_client();
